@@ -11,7 +11,7 @@ import (
 
 const aliasLength = 8 //для генератора случайного алиаса
 
-var UrlStorage = map[string]string{ // временное хранилище urlов
+var URLStorage = map[string]string{ // временное хранилище urlов
 	"practicum": "https://practicum.yandex.ru/",
 	"map":       "https://golangify.com/map",
 }
@@ -31,13 +31,13 @@ func PostURL(log *slog.Logger) http.HandlerFunc {
 		}
 		alias = NewRandomString(aliasLength) //генерируем произвольный алиас длины {aliasLength}
 
-		if _, ok := UrlStorage[alias]; ok {
+		if _, ok := URLStorage[alias]; ok {
 			http.Error(w, "alias already exist", http.StatusBadRequest)
 			log.Error("Can't add, alias already exist", slog.String("alias:", alias))
 			return
 		}
 
-		UrlStorage[alias] = string(body)
+		URLStorage[alias] = string(body)
 
 		/*
 			if string(body) == "https://practicum.yandex.ru/" {

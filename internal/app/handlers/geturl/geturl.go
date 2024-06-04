@@ -21,7 +21,7 @@ func GetURL(log *slog.Logger) http.HandlerFunc {
 			return
 		}
 
-		url, ok := saveurl.UrlStorage[alias]
+		url, ok := saveurl.URLStorage[alias]
 		if !ok {
 			http.Error(w, "alias not found", http.StatusBadRequest)
 			log.Error("alias not found", slog.String("alias: ", alias))
