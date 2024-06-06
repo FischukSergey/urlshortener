@@ -29,6 +29,11 @@ func PostURL(log *slog.Logger) http.HandlerFunc {
 			log.Error("Request bad")
 			return
 		}
+		if string(body)=="" {
+			http.Error(w, "Request is empty", http.StatusBadRequest)
+			log.Error("Request is empty")
+			return
+		}
 		alias = NewRandomString(aliasLength) //генерируем произвольный алиас длины {aliasLength}
 
 		if _, ok := URLStorage[alias]; ok {

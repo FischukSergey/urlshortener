@@ -1,8 +1,12 @@
 package geturl
 
 import (
+	// "errors"
+	// "io"
 	"log/slog"
 	"net/http"
+
+	// "strings"
 
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurl"
 	"github.com/go-chi/chi"
@@ -13,7 +17,8 @@ func GetURL(log *slog.Logger) http.HandlerFunc {
 
 		log.Debug("Handler: GetURL")
 
-		alias := chi.URLParam(r, "alias")
+		var alias string = ""
+		alias = chi.URLParam(r, "alias")
 
 		if alias == "" {
 			log.Info("alias is empty")
@@ -28,18 +33,9 @@ func GetURL(log *slog.Logger) http.HandlerFunc {
 			return
 		}
 
-		/*
-		   resp, err := json.Marshal(task)
-		   if err != nil {
-		       http.Error(w, err.Error(), http.StatusBadRequest)
-		       return
-		   }
-		*/
-
 		w.Header().Set("Location", url)
 		w.WriteHeader(http.StatusTemporaryRedirect)
 
-		// w.Write([]byte(url))
 		log.Info("Request alias  successful: ", slog.String("alias:", alias), slog.String("url:", url))
 		//http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 
