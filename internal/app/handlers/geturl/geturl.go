@@ -17,8 +17,8 @@ func GetURL(log *slog.Logger) http.HandlerFunc {
 
 		log.Debug("Handler: GetURL")
 
-		var alias string = ""
-		alias = chi.URLParam(r, "alias")
+		
+		alias := chi.URLParam(r, "alias")
 
 		if alias == "" {
 			log.Info("alias is empty")

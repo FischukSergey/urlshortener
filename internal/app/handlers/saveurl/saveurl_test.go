@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPostURL(t *testing.T) {
@@ -54,9 +55,11 @@ func TestPostURL(t *testing.T) {
 			h := http.HandlerFunc(PostURL(log))
 			h(w, request)
 
-			result:=w.Result()
-
-			assert.Equal(t,tt.want.statusCode,result.StatusCode)
+			result := w.Result()
+			err := result.Body.Close()
+			require.NoError(t, err)
+			
+			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 
 		})
 	}
