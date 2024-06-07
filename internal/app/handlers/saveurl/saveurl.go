@@ -9,6 +9,11 @@ import (
 	"time"
 )
 
+type Request struct { //структура запроса на будущее
+	URL   string
+	Alias string
+}
+
 const aliasLength = 8 //для генератора случайного алиаса
 
 var URLStorage = map[string]string{ // временное хранилище urlов
@@ -29,7 +34,7 @@ func PostURL(log *slog.Logger) http.HandlerFunc {
 			log.Error("Request bad")
 			return
 		}
-		if string(body)=="" {
+		if string(body) == "" {
 			http.Error(w, "Request is empty", http.StatusBadRequest)
 			log.Error("Request is empty")
 			return
@@ -68,17 +73,20 @@ func PostURL(log *slog.Logger) http.HandlerFunc {
 				return
 			}
 		*/
+		// var asd = r.Header.Get("Host")
+		// var asd1 = r.Header.Get("Accept")
+		// fmt.Println(asd, asd1, "ghjdthrf")
 
-		msg = append(msg, "http://localhost:8080/")
+		msg = append(msg, r.Header.Get("Host")) //"http://localhost:8080/")
 		msg = append(msg, alias)
 		newPath = strings.Join(msg, "")
-		
-		// fmt.Println(UrlStorage) //отладка убрать 
+
+		// fmt.Println(UrlStorage) //отладка убрать
 
 		w.WriteHeader(http.StatusCreated)
 		w.Header().Set("Content-Type", "text/plain")
 		w.Write([]byte(newPath))
-		log.Info("Request POST successful: ", slog.String("alias:", alias))
+		log.Info("Request POST successful", slog.String("alias:", alias))
 	}
 }
 
