@@ -77,7 +77,7 @@ func PostURL(log *slog.Logger) http.HandlerFunc {
 		// var asd1 = r.Header.Get("Accept")
 		// fmt.Println(asd, asd1, "ghjdthrf")
 
-		msg = append(msg, r.Header.Get("Host")) //"http://localhost:8080/")
+		msg = append(msg, "http://localhost:8080/")
 		msg = append(msg, alias)
 		newPath = strings.Join(msg, "")
 
