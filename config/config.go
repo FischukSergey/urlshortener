@@ -23,7 +23,7 @@ func ParseFlags() {
 		FlagServerPort = envRunAddr
 	}
 
-	if envBaseUrl := os.Getenv("BASE_URL"); envBaseUrl != "" {
-		FlagBaseURL = envBaseUrl
+	if envBaseURL := os.Getenv("BASE_URL"); envBaseURL != "" {
+		FlagBaseURL = envBaseURL
 	}
 }
