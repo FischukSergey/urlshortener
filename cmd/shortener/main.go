@@ -7,29 +7,25 @@ import (
 	"os"
 	"time"
 
+	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/geturl"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurl"
 	"github.com/go-chi/chi"
 )
 
-type Request struct { //структура запроса на будущее
-	URL   string
-	Alias string
-}
-
 func main() {
 	var log = slog.New(
 		slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 	)
+	config.ParseFlags() //инициализируем флаги конфигурации сервера
 
-	r := chi.NewRouter()
+	r := chi.NewRouter() 
 
-	// здесь регистрируйте ваши обработчики
 	r.Get("/{alias}", geturl.GetURL(log))
 	r.Post("/", saveurl.PostURL(log))
 
 	srv := &http.Server{
-		Addr:         "localhost:8080",
+		Addr:         config.FlagServerPort,
 		Handler:      r,
 		ReadTimeout:  4 * time.Second,
 		WriteTimeout: 4 * time.Second,
