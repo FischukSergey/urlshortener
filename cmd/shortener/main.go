@@ -17,7 +17,7 @@ func main() {
 	var log = slog.New(
 		slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 	)
-	config.ParseFlags() //инициализируем флаги конфигурации сервера
+	config.ParseFlags() //инициализируем флаги/переменные окружения конфигурации сервера
 
 	r := chi.NewRouter() 
 

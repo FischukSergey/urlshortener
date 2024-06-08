@@ -1,17 +1,16 @@
 package geturl
 
 import (
-	// "errors"
-	// "io"
 	"log/slog"
 	"net/http"
-
-	// "strings"
 
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurl"
 	"github.com/go-chi/chi"
 )
 
+//GettURL хандлер запроса (GET{ID}) полного URL по его алиасу
+//принимает в качестве параметров логгер, потом можно будет добавить 
+//интерфейс с методом поиска записи в базу данных
 func GetURL(log *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 

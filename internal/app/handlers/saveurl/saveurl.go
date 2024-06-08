@@ -22,7 +22,9 @@ var URLStorage = map[string]string{ // временное хранилище URL
 	"practicum": "https://practicum.yandex.ru/",
 	"map":       "https://golangify.com/map",
 }
-
+//PostURL хандлер добавления (POST) сокращенного URL
+//принимает в качестве параметров логгер, потом можно будет добавить 
+//интерфейс с методом добавления записи в базу данных
 func PostURL(log *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -51,35 +53,7 @@ func PostURL(log *slog.Logger) http.HandlerFunc {
 
 		URLStorage[alias] = string(body)
 
-		/*
-			if string(body) == "https://practicum.yandex.ru/" {
-				alias = "EwHXdJfB"
-			} else {
-				alias = NewRandomString(aliasLength) //генерируем произвольный алиас длины aliasLength
-			}
-		*/
-		// var req Request
-		// var buf bytes.Buffer
-		// err:=render.DecodeJSON(r.Body, &req)
-		// _, err := buf.ReadFrom(r.Body)
-		/*
-			if err = json.Unmarshal(buf.Bytes(), &task); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				log.Error("Bad request")
-				return
-			}
-
-			if idTest, ok := tasks[task.ID]; ok { //проверка на существующий ключ мапы
-				http.Error(w, "ID already exist", http.StatusBadRequest)
-				log.Error("Can't add, ID already exist", slog.String("ID", idTest.ID))
-				return
-			}
-		*/
-		// var asd = r.Header.Get("Host")
-		// var asd1 = r.Header.Get("Accept")
-		// fmt.Println(asd, asd1, "ghjdthrf")
-
-		msg = append(msg, config.FlagBaseURL) //"http://localhost:8080")
+		msg = append(msg, config.FlagBaseURL)
 		msg = append(msg, alias)
 		newPath = strings.Join(msg, "/")
 
