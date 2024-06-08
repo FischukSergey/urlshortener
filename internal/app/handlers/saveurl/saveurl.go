@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/FischukSergey/urlshortener.git/config"
 )
 
 type Request struct { //структура запроса на будущее
@@ -16,7 +18,7 @@ type Request struct { //структура запроса на будущее
 
 const aliasLength = 8 //для генератора случайного алиаса
 
-var URLStorage = map[string]string{ // временное хранилище urlов
+var URLStorage = map[string]string{ // временное хранилище URLов
 	"practicum": "https://practicum.yandex.ru/",
 	"map":       "https://golangify.com/map",
 }
@@ -77,9 +79,9 @@ func PostURL(log *slog.Logger) http.HandlerFunc {
 		// var asd1 = r.Header.Get("Accept")
 		// fmt.Println(asd, asd1, "ghjdthrf")
 
-		msg = append(msg, "http://localhost:8080/")
+		msg = append(msg, config.FlagBaseURL) //"http://localhost:8080")
 		msg = append(msg, alias)
-		newPath = strings.Join(msg, "")
+		newPath = strings.Join(msg, "/")
 
 		// fmt.Println(UrlStorage) //отладка убрать
 

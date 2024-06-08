@@ -16,7 +16,7 @@ func TestPostURL(t *testing.T) {
 	type want struct {
 		contentType string
 		statusCode  int
-		alias       string //на будущее
+		// alias       string //на будущее
 	}
 
 	tests := []struct {
@@ -58,7 +58,7 @@ func TestPostURL(t *testing.T) {
 			result := w.Result()
 			err := result.Body.Close()
 			require.NoError(t, err)
-			
+
 			assert.Equal(t, tt.want.statusCode, result.StatusCode)
 
 		})
