@@ -5,27 +5,27 @@ import (
 	"log/slog"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/FischukSergey/urlshortener.git/config"
 )
 
-type Request struct { //структура запроса на будущее
-	URL   string
-	Alias string
+type URLSaver interface {
+	SaveStorageURL(alias, URL string)
+	GetStorageURL(alias string) (string, bool)
 }
+
+// type Request struct { //структура запроса на будущее
+// 	URL   string
+// 	Alias string
+// }
 
 const aliasLength = 8 //для генератора случайного алиаса
 
-var URLStorage = map[string]string{ // временное хранилище URLов
-	"practicum": "https://practicum.yandex.ru/",
-	"map":       "https://golangify.com/map",
-}
-//PostURL хандлер добавления (POST) сокращенного URL
-//принимает в качестве параметров логгер, потом можно будет добавить 
-//интерфейс с методом добавления записи в базу данных
-func PostURL(log *slog.Logger) http.HandlerFunc {
+// PostURL хендлер добавления (POST) сокращенного URL
+func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		log.Debug("Handler: PostURL")
@@ -43,15 +43,21 @@ func PostURL(log *slog.Logger) http.HandlerFunc {
 			log.Error("Request is empty")
 			return
 		}
+		if _, err := url.ParseRequestURI(string(body)); err != nil {
+			http.Error(w, "Invalid request URL", http.StatusBadRequest)
+			log.Error("Invalid request URL")
+			return
+		}
+
 		alias = NewRandomString(aliasLength) //генерируем произвольный алиас длины {aliasLength}
 
-		if _, ok := URLStorage[alias]; ok {
-			http.Error(w, "alias already exist", http.StatusBadRequest)
+		if _, ok := storage.GetStorageURL(alias); ok {
+			http.Error(w, "alias already exist", http.StatusConflict)
 			log.Error("Can't add, alias already exist", slog.String("alias:", alias))
 			return
 		}
 
-		URLStorage[alias] = string(body)
+		storage.SaveStorageURL(alias, string(body))
 
 		msg = append(msg, config.FlagBaseURL)
 		msg = append(msg, alias)

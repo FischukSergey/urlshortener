@@ -1,16 +1,22 @@
-#Устанавливаем переменную среды, где находится файл настроек local.yaml
-#path:=CONFIG_PATH=./config/local.yaml
+# устанавливаем переменные среды окружения
+ipAddr:=localhost:8080
+envRunAddr:=SERVER_ADDRESS=$(ipAddr)
+envBaseURL:=BASE_URL=http://$(ipAddr)
 
-.PHONY: server
 server:
 				@echo "Running server"
-				go run ./cmd/shortener/main.go
-#				$(path) go run ./cmd/myrestapi/main.go
-#				open http://localhost:8082/
+				$(envRunAddr) $(envBaseURL) go run ./cmd/shortener/main.go
+.PHONY: server
 
-.PHONY: test
+defaultserver:
+				@echo "Running default server "
+				go run ./cmd/shortener/main.go
+
 test:
 				@echo "Running unit tests"
 				go test ./internal/app/handlers/geturl/
 				go test ./internal/app/handlers/saveurl/
-#				cd ./internal/app/handlers/geturl/
+.PHONY: test
+
+# curl -v -X GET 'http://localhost:8080/map'
+# curl -v -d "http://yandex.ru" -X POST 'http://localhost:8080/'

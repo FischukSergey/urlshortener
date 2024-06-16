@@ -9,6 +9,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/FischukSergey/urlshortener.git/internal/storage/mapstorage"
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,9 +17,9 @@ import (
 
 func TestGetURL(t *testing.T) {
 	type want struct {
-		statusCode  int
-		location    string
-		resError    string
+		statusCode int
+		location   string
+		resError   string
 	}
 
 	tests := []struct {
@@ -30,25 +31,25 @@ func TestGetURL(t *testing.T) {
 			name:  "simple test",
 			alias: "practicum",
 			want: want{
-				statusCode:  307,
-				location:    "https://practicum.yandex.ru/",
-				resError:    "",
+				statusCode: 307,
+				location:   "https://practicum.yandex.ru/",
+				resError:   "",
 			},
 		},
 		{
 			name:  "alias is empty",
 			alias: "",
 			want: want{
-				statusCode:  404,
-				resError:    "404 page not found\n",
+				statusCode: 404,
+				resError:   "404 page not found\n",
 			},
 		},
 		{
 			name:  "alias not found",
 			alias: "dsfghjjkj",
 			want: want{
-				statusCode:  400,
-				resError:    "alias not found\n",
+				statusCode: 400,
+				resError:   "alias not found\n",
 			},
 		},
 	}
@@ -56,6 +57,7 @@ func TestGetURL(t *testing.T) {
 	var log = slog.New(
 		slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 	)
+	var m = mapstorage.NewMap()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -63,9 +65,9 @@ func TestGetURL(t *testing.T) {
 			fmt.Println(aliasGet)
 
 			r := chi.NewRouter()
-			r.Get("/{alias}", GetURL(log))
+			r.Get("/{alias}", GetURL(log, m))
 
-			request, err := http.NewRequest(http.MethodGet, aliasGet, nil) 
+			request, err := http.NewRequest(http.MethodGet, aliasGet, nil)
 			require.NoError(t, err)
 
 			w := httptest.NewRecorder()
