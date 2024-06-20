@@ -20,3 +20,5 @@ test:
 
 # curl -v -X GET 'http://localhost:8080/map'
 # curl -v -d "http://yandex.ru" -X POST 'http://localhost:8080/'
+# curl -v -d '{"url": "https://codewars.com"}' -H "Content-Type: application/json" POST 'http://localhost:8080/api/shorten'
+# curl -v -X GET 'http://localhost:8080/map' -H "Accept-Encoding: gzip"
