@@ -116,7 +116,7 @@ func NewMwGzipper(log *slog.Logger) func(next http.Handler) http.Handler {
 
 			next.ServeHTTP(ow, r)
 		}
-		
+
 		return http.HandlerFunc(GzipFn)
 	}
 }

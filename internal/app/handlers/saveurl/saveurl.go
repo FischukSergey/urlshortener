@@ -17,10 +17,6 @@ type URLSaver interface {
 	GetStorageURL(alias string) (string, bool)
 }
 
-// type Request struct { //структура запроса на будущее
-// 	URL   string
-// 	Alias string
-// }
 
 const aliasLength = 8 //для генератора случайного алиаса
 
