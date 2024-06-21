@@ -20,19 +20,19 @@ func TestPostURLjson(t *testing.T) {
 		statusCode  int
 		respJSON    string
 	}
-	type RequestJSON struct {
-		Url string `json:"url,omitempty"`
+	type requestJSON struct {
+		jsonString string 
 	}
 
 	tests := []struct {
 		name        string
-		bodyRequest RequestJSON
+		bodyRequest requestJSON
 		want        want
 	}{
 		{
 			name: "simple test",
-			bodyRequest: RequestJSON{
-				Url: `{"url":"https://practicum.yandex.ru/"}`,
+			bodyRequest: requestJSON{
+				jsonString: `{"url":"https://practicum.yandex.ru/"}`,
 			},
 			want: want{
 				contentType: "application/json",
@@ -41,7 +41,7 @@ func TestPostURLjson(t *testing.T) {
 		},
 		{
 			name:        "test '' bodyRequest",
-			bodyRequest: RequestJSON{""},
+			bodyRequest: requestJSON{""},
 			want: want{
 				contentType: "application/json",
 				statusCode:  400,
@@ -49,8 +49,8 @@ func TestPostURLjson(t *testing.T) {
 			},
 		},
 		{
-			name:        "test bad URL",
-			bodyRequest: RequestJSON{Url: `{"url":"99tp://practicum.yandex.ru/"}`},
+			name:        "test bad url",
+			bodyRequest: requestJSON{jsonString: `{"URLjson":"99tp://practicum.yandex.ru/"}`},
 			want: want{
 				contentType: "application/json",
 				statusCode:  400,
@@ -58,8 +58,8 @@ func TestPostURLjson(t *testing.T) {
 			},
 		},
 		{
-			name:        "test bad URL",
-			bodyRequest: RequestJSON{Url: `{" ' "}`},
+			name:        "test bad url",
+			bodyRequest: requestJSON{jsonString: `{" ' "}`},
 			want: want{
 				contentType: "application/json",
 				statusCode:  400,
@@ -68,7 +68,7 @@ func TestPostURLjson(t *testing.T) {
 		},
 
 		// TODO: добавить проверку на существующий алиас когда будет настоящий, а не произвольный.
-		// TODO: заменить проверку на валидность URL
+		// TODO: заменить проверку на валидность jsonString
 	}
 	var log = slog.New(
 		slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
@@ -77,7 +77,7 @@ func TestPostURLjson(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			request := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewReader([]byte(tt.bodyRequest.Url)))
+			request := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewReader([]byte(tt.bodyRequest.jsonString)))
 			request.Header.Set("Content-Type", "application/json")
 
 			w := httptest.NewRecorder()

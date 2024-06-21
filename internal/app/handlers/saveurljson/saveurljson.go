@@ -1,6 +1,7 @@
 package saveurljson
 
 import (
+	"encoding/json"
 	"errors"
 	"io"
 	"log/slog"
@@ -27,8 +28,8 @@ type Response struct {
 	Error  string `json:"error,omitempty"`
 }
 
-//PostURLjson хендлер добавления (POST:/api/shorten) сокращенного URL. 
-//Запрос и ответ в формате JSON.
+// PostURLjson хендлер добавления (POST:/api/shorten) сокращенного URL.
+// Запрос и ответ в формате JSON.
 func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -86,9 +87,18 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 
 		w.WriteHeader(http.StatusCreated)
 
-		render.JSON(w, r, Response{
+		resp, err := json.Marshal(Response{
 			Result: newPath,
 		})
+		if err != nil {
+			log.Error("Can't make JSON", err)
+		}
+		w.Write(resp)
+		
+		// Потому, что тест требует json пакет
+		// render.JSON(w, r, Response{
+		// 	Result: newPath,
+		// })
 
 		log.Info("Request POST json successful", slog.String("alias:", alias))
 	}
