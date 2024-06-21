@@ -87,6 +87,7 @@ func TestPostURLjson(t *testing.T) {
 
 			result := w.Result()
 			res, err := io.ReadAll(result.Body)
+			require.NoError(t, err)
 			err = result.Body.Close()
 			require.NoError(t, err)
 
