@@ -13,6 +13,11 @@ import (
 	"github.com/go-chi/render"
 )
 
+type URLSaverJSON interface {
+	SaveStorageURL(alias, URL string)
+	GetStorageURL(alias string) (string, bool)
+}
+
 type Request struct {
 	URL string `json:"url"`
 }
@@ -22,7 +27,9 @@ type Response struct {
 	Error  string `json:"error,omitempty"`
 }
 
-func PostURLjson(log *slog.Logger, storage saveurl.URLSaver) http.HandlerFunc {
+//PostURLjson хендлер добавления (POST:/api/shorten) сокращенного URL. 
+//Запрос и ответ в формате JSON.
+func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		log.Debug("Handler: PostURLjson")
@@ -34,7 +41,7 @@ func PostURLjson(log *slog.Logger, storage saveurl.URLSaver) http.HandlerFunc {
 		err := render.DecodeJSON(r.Body, &req)
 
 		if errors.Is(err, io.EOF) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			w.WriteHeader(http.StatusBadRequest)
 			log.Error("Request is empty")
 			render.JSON(w, r, Response{
 				Error: "empty request",
@@ -42,7 +49,7 @@ func PostURLjson(log *slog.Logger, storage saveurl.URLSaver) http.HandlerFunc {
 			return
 		}
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			w.WriteHeader(http.StatusBadRequest)
 			log.Error("failed to decode json request body", err)
 			render.JSON(w, r, Response{
 				Error: "failed to decode json request",
@@ -51,8 +58,9 @@ func PostURLjson(log *slog.Logger, storage saveurl.URLSaver) http.HandlerFunc {
 		}
 
 		if _, err := url.ParseRequestURI(req.URL); err != nil {
-			http.Error(w, "Invalid request URL", http.StatusBadRequest)
 			log.Error("Invalid request URL")
+
+			w.WriteHeader(http.StatusBadRequest)
 			render.JSON(w, r, Response{
 				Error: "invalid request URL",
 			})
@@ -61,8 +69,12 @@ func PostURLjson(log *slog.Logger, storage saveurl.URLSaver) http.HandlerFunc {
 
 		alias = saveurl.NewRandomString(8) //поправить
 		if _, ok := storage.GetStorageURL(alias); ok {
-			http.Error(w, "alias already exist", http.StatusConflict)
 			log.Error("Can't add, alias already exist", slog.String("alias:", alias))
+
+			w.WriteHeader(http.StatusConflict)
+			render.JSON(w, r, Response{
+				Error: "alias already exist",
+			})
 			return
 		}
 
