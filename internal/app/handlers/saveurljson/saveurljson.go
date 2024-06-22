@@ -87,6 +87,7 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 
 		w.WriteHeader(http.StatusCreated)
 
+		// Потому, что тест требует json пакет
 		resp, err := json.Marshal(Response{
 			Result: newPath,
 		})
@@ -94,12 +95,11 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 			log.Error("Can't make JSON", err)
 		}
 		w.Write(resp)
-		
-		// Потому, что тест требует json пакет
+
 		// render.JSON(w, r, Response{
 		// 	Result: newPath,
 		// })
 
-		log.Info("Request POST json successful", slog.String("alias:", alias))
+		log.Info("Request POST json successful", slog.String("json:",string(resp)))
 	}
 }

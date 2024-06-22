@@ -31,7 +31,7 @@ func (c *compressWriter) Write(p []byte) (int, error) {
 }
 
 func (c *compressWriter) WriteHeader(statusCode int) {
-	if statusCode < 300 {
+	if statusCode < 300 || statusCode == 307 {
 		c.w.Header().Set("Content-Encoding", "gzip")
 	}
 	c.w.WriteHeader(statusCode)
@@ -96,7 +96,7 @@ func NewMwGzipper(log *slog.Logger) func(next http.Handler) http.Handler {
 			sendsGzip := strings.Contains(contentEncoding, "gzip")
 			contentRequest := r.Header.Get("Content-Type")
 			sendsRequestJSON := strings.Contains(contentRequest, "application/json")
-			sendsRequestText := strings.Contains(contentRequest, "text/html")
+			sendsRequestText := strings.Contains(contentRequest, "text/")
 			if sendsGzip && (sendsRequestJSON || sendsRequestText) {
 				// оборачиваем тело запроса в io.Reader с поддержкой декомпрессии
 				cr, err := newCompressReader(r.Body)
@@ -106,10 +106,13 @@ func NewMwGzipper(log *slog.Logger) func(next http.Handler) http.Handler {
 				}
 				// меняем тело запроса на новое
 				r.Body = cr
+				//res, _ := io.ReadAll(r.Body)
+
 				log.Info("body request encoded",
 					slog.String("uri", r.RequestURI),
 					slog.String("Content-Type", contentRequest),
 					slog.String("Content-Encoding", contentEncoding))
+				//slog.String("body request", string()))
 
 				defer cr.Close()
 			}
