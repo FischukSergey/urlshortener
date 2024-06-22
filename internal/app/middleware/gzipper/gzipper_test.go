@@ -91,7 +91,7 @@ func TestNewMwGzipper(t *testing.T) {
 
 			//запускаем сервер
 			request := httptest.NewRequest(tt.httpMethod, tt.uriString, bytes.NewReader(buf.Bytes()))
-			request.Header.Set("Content-Type", tt.contentType)
+			// request.Header.Set("Content-Type", tt.contentType)
 			request.Header.Add("Content-Encoding", "gzip")
 			request.Header.Add("Accept-Encoding", "gzip")
 

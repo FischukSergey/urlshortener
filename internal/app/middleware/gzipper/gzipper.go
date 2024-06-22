@@ -94,10 +94,10 @@ func NewMwGzipper(log *slog.Logger) func(next http.Handler) http.Handler {
 			// проверяем, что клиент отправил серверу сжатые данные в формате gzip
 			contentEncoding := r.Header.Get("Content-Encoding")
 			sendsGzip := strings.Contains(contentEncoding, "gzip")
-			contentRequest := r.Header.Get("Content-Type")
-			sendsRequestJSON := strings.Contains(contentRequest, "application/json")
-			sendsRequestText := strings.Contains(contentRequest, "text/")
-			if sendsGzip && (sendsRequestJSON || sendsRequestText) {
+			// contentRequest := r.Header.Get("Content-Type")
+			// sendsRequestJSON := strings.Contains(contentRequest, "application/json")
+			// sendsRequestText := strings.Contains(contentRequest, "text/")
+			if sendsGzip {//&& (sendsRequestJSON || sendsRequestText) {
 				// оборачиваем тело запроса в io.Reader с поддержкой декомпрессии
 				cr, err := newCompressReader(r.Body)
 				if err != nil {
@@ -110,7 +110,7 @@ func NewMwGzipper(log *slog.Logger) func(next http.Handler) http.Handler {
 
 				log.Info("body request encoded",
 					slog.String("uri", r.RequestURI),
-					slog.String("Content-Type", contentRequest),
+					// slog.String("Content-Type", contentRequest),
 					slog.String("Content-Encoding", contentEncoding))
 				//slog.String("body request", string()))
 
