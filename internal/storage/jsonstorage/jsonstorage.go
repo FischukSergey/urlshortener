@@ -14,7 +14,6 @@ type JSONRaw struct {
 }
 
 type JSONFileWriter struct {
-	// mx         *sync.Mutex
 	file       *os.File
 	JSONWriter *json.Encoder
 }
@@ -33,10 +32,6 @@ func NewJSONFileWriter(fileName string) (*JSONFileWriter, error) {
 
 // Write() метод для записи новой json строки в файл
 func (fs *JSONFileWriter) Write(alias, urlOriginal string) error {
-	//fs.mx.Lock()
-	// defer fs.mx.Unlock()
-
-	//	TODO логику обработки json строки
 	raw := JSONRaw{
 		ShortURL:    alias,
 		OriginalURL: urlOriginal,
@@ -68,6 +63,7 @@ func NewJSONFileReader(filename string) (*JSONFileReader, error) {
 	}, nil
 }
 
+//Метод ReadToMap() принимает мапу(пустую) и заполняет ее данными из json файла
 func (fr *JSONFileReader) ReadToMap(mapURL map[string]string) (map[string]string, error) { //чтение файла в мапу до запуска сервера, поэтому работаем без mutex
 	defer fr.file.Close()
 
@@ -95,37 +91,3 @@ func (fr *JSONFileReader) Close() error {
 // {"uuid":"1","short_url":"4rSPg8ap","original_url":"http://yandex.ru"}
 // {"uuid":"2","short_url":"edVPg3ks","original_url":"http://ya.ru"}
 // {"uuid":"3","short_url":"dG56Hqxm","original_url":"http://practicum.yandex.ru"}
-/*
-
-func TestSettings(t *testing.T) {
-    fname := `settings.json`
-    settings := Settings{
-        Port: 3000,
-        Host: `localhost`,
-    }
-    if err := settings.Save(fname); err != nil {
-        t.Error(err)
-    }
-}
-
-type CsvWriter struct {
-mutex *sync.Mutex
-csvWriter *csv.Writer
-}
-
-func NewCsvWriter(fileName string) (*CsvWriter, error) {
-csvFile, err := os.Create(fileName)
-if err != nil {
-return nil, err
-}
-w := csv.NewWriter(csvFile)
-return &CsvWriter{csvWriter:w, mutex: &sync.Mutex{}}, nil
-}
-
-func (w *CsvWriter) Write(row []string) {
-w.mutex.Lock()
-w.csvWriter.Write(row)
-w.mutex.Unlock()
-}
-
-*/
