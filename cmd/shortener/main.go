@@ -13,10 +13,11 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurljson"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/gzipper"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/mwlogger"
+	"github.com/FischukSergey/urlshortener.git/internal/storage/jsonstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/mapstorage"
 	"github.com/go-chi/chi"
+	// "github.com/go-chi/chi/middleware"
 )
-
 
 func main() {
 	var log = slog.New( //инициализируем логгер
@@ -27,9 +28,25 @@ func main() {
 
 	config.ParseFlags() //инициализируем флаги/переменные окружения конфигурации сервера
 
+	//Читаем в мапу из файла с json записями url
+	if config.FlagFileStoragePath != "" {
+		readFromJSONFile, err := jsonstorage.NewJSONFileReader(config.FlagFileStoragePath)
+		if err != nil {
+			fmt.Println("Не удалось открыть резервный файл с json сокращениями", config.FlagFileStoragePath)
+			return
+		}
+
+		mapURL.URLStorage, err = readFromJSONFile.ReadToMap(mapURL.URLStorage)
+		if err != nil {
+			fmt.Println("Не удалось прочитать файл с json сокращениями")
+		}
+		fmt.Println(mapURL.URLStorage)
+	}
+
 	r := chi.NewRouter()             //инициализируем роутер
 	r.Use(mwlogger.NewMwLogger(log)) //маршрут в middleware за логированием
-	r.Use(gzipper.NewMwGzipper(log))
+	r.Use(gzipper.NewMwGzipper(log)) //работа со сжатыми запросами/сжатие ответов
+	// r.Use(middleware.RequestID)      //используем id запроса в качестве uuid записи как временное решение
 
 	r.Get("/{alias}", geturl.GetURL(log, mapURL))
 	r.Post("/", saveurl.PostURL(log, mapURL))

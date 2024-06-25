@@ -70,6 +70,8 @@ func TestNewMwGzipper(t *testing.T) {
 		slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 	)
 	var m = mapstorage.NewMap()
+	m.URLStorage["practicum"] = "https://practicum.yandex.ru/"
+	m.URLStorage["map"] = "https://golangify.com/map"
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -91,7 +93,6 @@ func TestNewMwGzipper(t *testing.T) {
 
 			//запускаем сервер
 			request := httptest.NewRequest(tt.httpMethod, tt.uriString, bytes.NewReader(buf.Bytes()))
-			// request.Header.Set("Content-Type", tt.contentType)
 			request.Header.Add("Content-Encoding", "gzip")
 			request.Header.Add("Accept-Encoding", "gzip")
 

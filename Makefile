@@ -2,10 +2,11 @@
 ipAddr:=localhost:8080
 envRunAddr:=SERVER_ADDRESS=$(ipAddr)
 envBaseURL:=BASE_URL=http://$(ipAddr)
+envFlagFileStoragePath:=FILE_STORAGE_PATH="./tmp/short-url-db.json"
 
 server:
 				@echo "Running server"
-				$(envRunAddr) $(envBaseURL) go run ./cmd/shortener/main.go
+				$(envRunAddr) $(envBaseURL) $(envFlagFileStoragePath) go run ./cmd/shortener/main.go
 .PHONY: server
 
 defaultserver:
@@ -14,8 +15,9 @@ defaultserver:
 
 test:
 				@echo "Running unit tests"
-				go test ./internal/app/handlers/geturl/
-				go test ./internal/app/handlers/saveurl/
+				go test -race -count=1 ./...
+				#go test ./internal/app/handlers/geturl/
+				#go test ./internal/app/handlers/saveurl/
 .PHONY: test
 
 # curl -v -X GET 'http://localhost:8080/map'
