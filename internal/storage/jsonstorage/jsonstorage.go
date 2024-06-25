@@ -8,7 +8,7 @@ import (
 )
 
 type JSONRaw struct {
-	UUid        string `json:"uuid"`
+	UUID        string `json:"uuid"`
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 }
@@ -19,7 +19,7 @@ type JSONFileWriter struct {
 	JSONWriter *json.Encoder
 }
 
-//NewJSONFileWriter() создаем объект с открытым файлом для записи 
+// NewJSONFileWriter() создаем объект с открытым файлом для записи
 func NewJSONFileWriter(fileName string) (*JSONFileWriter, error) {
 	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
@@ -40,7 +40,7 @@ func (fs *JSONFileWriter) Write(alias, urlOriginal string) error {
 	raw := JSONRaw{
 		ShortURL:    alias,
 		OriginalURL: urlOriginal,
-		UUid:        "1", //TODO заменить на реальный ID
+		UUID:        "1", //TODO заменить на реальный ID
 	}
 
 	return fs.JSONWriter.Encode(raw)
@@ -55,7 +55,8 @@ type JSONFileReader struct {
 	file    *os.File
 	ScanRaw *bufio.Scanner
 }
-//инициализация объекта file и сканера строк к нему
+
+// инициализация объекта file и сканера строк к нему
 func NewJSONFileReader(filename string) (*JSONFileReader, error) {
 	file, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
@@ -70,23 +71,22 @@ func NewJSONFileReader(filename string) (*JSONFileReader, error) {
 func (fr *JSONFileReader) ReadToMap(mapURL map[string]string) (map[string]string, error) { //чтение файла в мапу до запуска сервера, поэтому работаем без mutex
 	defer fr.file.Close()
 
-	for fr.ScanRaw.Scan() {  //построчно читаем, декодируем и пишем в мапу
-		data := fr.ScanRaw.Bytes() 
+	for fr.ScanRaw.Scan() { //построчно читаем, декодируем и пишем в мапу
+		data := fr.ScanRaw.Bytes()
 		mapLine := &JSONRaw{}
 		err := json.Unmarshal(data, &mapLine)
 		if err != nil {
 			fmt.Println("Не удалось декодировать строку:", data)
-			return nil,err
+			return nil, err
 		}
 		if _, ok := mapURL[mapLine.ShortURL]; ok {
 			fmt.Printf("Алиас %s дублируется:\n", mapLine.ShortURL)
-		}else{
-			mapURL[mapLine.ShortURL]=mapLine.OriginalURL
+		} else {
+			mapURL[mapLine.ShortURL] = mapLine.OriginalURL
 		}
 	}
 	return mapURL, nil
 }
-
 
 func (fr *JSONFileReader) Close() error {
 	return fr.file.Close()
