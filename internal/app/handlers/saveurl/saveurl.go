@@ -10,13 +10,13 @@ import (
 	"time"
 
 	"github.com/FischukSergey/urlshortener.git/config"
+	"github.com/go-chi/chi/middleware"
 )
 
 type URLSaver interface {
 	SaveStorageURL(alias, URL string)
 	GetStorageURL(alias string) (string, bool)
 }
-
 
 const aliasLength = 8 //для генератора случайного алиаса
 
@@ -64,7 +64,10 @@ func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 		w.WriteHeader(http.StatusCreated)
 		w.Header().Set("Content-Type", "text/plain")
 		w.Write([]byte(newPath))
-		log.Info("Request POST successful", slog.String("alias:", alias))
+		log.Info("Request POST successful",
+			slog.String("alias", alias),
+			slog.String("IDrequest", middleware.GetReqID(r.Context())),
+		)
 	}
 }
 

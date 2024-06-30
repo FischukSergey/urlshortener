@@ -16,6 +16,7 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/storage/jsonstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/mapstorage"
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 )
 
 func main() {
@@ -35,17 +36,18 @@ func main() {
 			return
 		}
 
-		mapURL.URLStorage, err = readFromJSONFile.ReadToMap(mapURL.URLStorage)
+		//mapURL.URLStorage, 
+		err = readFromJSONFile.ReadToMap(mapURL.URLStorage)
 		if err != nil {
 			fmt.Println("Не удалось прочитать файл с json сокращениями")
 		}
-		fmt.Println(mapURL.URLStorage)
+		//fmt.Println(mapURL.URLStorage)
 	}
 
 	r := chi.NewRouter()             //инициализируем роутер
 	r.Use(mwlogger.NewMwLogger(log)) //маршрут в middleware за логированием
 	r.Use(gzipper.NewMwGzipper(log)) //работа со сжатыми запросами/сжатие ответов
-	// r.Use(middleware.RequestID)      //используем id запроса в качестве uuid записи как временное решение
+	r.Use(middleware.RequestID)      
 
 	r.Get("/{alias}", geturl.GetURL(log, mapURL))
 	r.Post("/", saveurl.PostURL(log, mapURL))

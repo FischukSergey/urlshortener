@@ -31,7 +31,7 @@ func ParseFlags() {
 	}
 
 	if envFlagFileStoragePath, ok := os.LookupEnv("FILE_STORAGE_PATH"); ok {
-		// If envFlagFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFlagFileStoragePath != "" {
+	// if envFlagFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFlagFileStoragePath != "" {
 		FlagFileStoragePath = envFlagFileStoragePath
 	}
 }
