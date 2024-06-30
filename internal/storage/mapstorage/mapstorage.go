@@ -1,6 +1,7 @@
 package mapstorage
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"sync"
@@ -40,7 +41,7 @@ func (ds *DataStore) GetStorageURL(alias string) (string, bool) {
 }
 
 // SaveStorageURL(alias, URL string) метод записи в хранилище
-func (ds *DataStore) SaveStorageURL(alias, URL string) {
+func (ds *DataStore) SaveStorageURL(alias, URL string) error {
 	ds.mx.Lock()
 	defer ds.mx.Unlock()
 	ds.URLStorage[alias] = URL
@@ -49,7 +50,8 @@ func (ds *DataStore) SaveStorageURL(alias, URL string) {
 	if config.FlagFileStoragePath != "" {
 		jsonDB, err := jsonstorage.NewJSONFileWriter(config.FlagFileStoragePath)
 		if err != nil {
-			log.Error("Error opening the file 'short-url-db.json'", err)
+			// log.Error("Error opening the file 'short-url-db.json'", err)
+			return fmt.Errorf("%s. Error opening the file: %s ", err, config.FlagFileStoragePath)
 		}
 		defer jsonDB.Close()
 
@@ -57,6 +59,7 @@ func (ds *DataStore) SaveStorageURL(alias, URL string) {
 			log.Error("Error writing to the file 'short-url-db.json'", err)
 		}
 	}
+	return nil
 }
 
 // GetAll() 	может пригодиться
