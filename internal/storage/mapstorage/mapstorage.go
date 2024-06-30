@@ -1,7 +1,13 @@
 package mapstorage
 
 import (
+	"fmt"
+	"log/slog"
+	"os"
 	"sync"
+
+	"github.com/FischukSergey/urlshortener.git/config"
+	"github.com/FischukSergey/urlshortener.git/internal/storage/jsonstorage"
 )
 
 type DataStore struct {
@@ -13,11 +19,15 @@ type DataStore struct {
 func NewMap() *DataStore {
 	return &DataStore{
 		URLStorage: map[string]string{
-			"practicum": "https://practicum.yandex.ru/",
-			"map":       "https://golangify.com/map",
+			// "practicum": "https://practicum.yandex.ru/",
+			// "map":       "https://golangify.com/map",
 		},
 	}
 }
+
+var log = slog.New(
+	slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
+)
 
 //реализация методов записи и чтения из мапы с синхронизацией
 
@@ -30,22 +40,37 @@ func (ds *DataStore) GetStorageURL(alias string) (string, bool) {
 	return val, ok
 }
 
-//SaveStorageURL(alias, URL string) метод записи в хранилище
-func (ds *DataStore) SaveStorageURL(alias, URL string) {
+// SaveStorageURL(alias, URL string) метод записи в хранилище
+func (ds *DataStore) SaveStorageURL(alias, URL string) error {
 	ds.mx.Lock()
 	defer ds.mx.Unlock()
-	ds.URLStorage[alias]=URL
+	ds.URLStorage[alias] = URL
+
+	//пишем параллельно в текстовый файл json строку
+	if config.FlagFileStoragePath != "" {
+		jsonDB, err := jsonstorage.NewJSONFileWriter(config.FlagFileStoragePath)
+		if err != nil {
+			// log.Error("Error opening the file 'short-url-db.json'", err)
+			return fmt.Errorf("%s. Error opening the file: %s ", err, config.FlagFileStoragePath)
+		}
+		defer jsonDB.Close()
+
+		if err = jsonDB.Write(alias, URL); err != nil {
+			log.Error("Error writing to the file 'short-url-db.json'", err)
+		}
+	}
+	return nil
 }
 
-//GetAll() 	может пригодиться
+// GetAll() 	может пригодиться
 func (ds *DataStore) GetAll() map[string]string {
-ds.mx.RLock()
-defer ds.mx.RUnlock()
+	ds.mx.RLock()
+	defer ds.mx.RUnlock()
 
-mapCopy := make(map[string]string, len(ds.URLStorage))
-for key, val := range ds.URLStorage {
-mapCopy[key] = val
-}
+	mapCopy := make(map[string]string, len(ds.URLStorage))
+	for key, val := range ds.URLStorage {
+		mapCopy[key] = val
+	}
 
-return mapCopy
+	return mapCopy
 }

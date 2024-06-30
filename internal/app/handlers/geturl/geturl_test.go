@@ -58,6 +58,8 @@ func TestGetURL(t *testing.T) {
 		slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 	)
 	var m = mapstorage.NewMap()
+	m.URLStorage["practicum"] = "https://practicum.yandex.ru/"
+	m.URLStorage["map"] = "https://golangify.com/map"
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
