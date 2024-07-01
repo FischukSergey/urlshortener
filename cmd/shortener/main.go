@@ -8,11 +8,13 @@ import (
 	"time"
 
 	"github.com/FischukSergey/urlshortener.git/config"
+	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/getpingdb"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/geturl"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurl"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurljson"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/gzipper"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/mwlogger"
+	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/jsonstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/mapstorage"
 	"github.com/go-chi/chi"
@@ -36,22 +38,39 @@ func main() {
 			return
 		}
 
-		//mapURL.URLStorage, 
+		//mapURL.URLStorage,
 		err = readFromJSONFile.ReadToMap(mapURL.URLStorage)
 		if err != nil {
 			fmt.Println("Не удалось прочитать файл с json сокращениями")
 		}
-		//fmt.Println(mapURL.URLStorage)
 	}
+
+	// Инициализируем базу данных Postgres
+	var dbConfig = config.DBConfig{
+		User:     "postgres",
+		Password: "postgres", //заменить на переменную окружения
+		Host:     "localhost",
+		Port:     "5432",
+		Database: config.FlagDatabaseDSN,
+	}
+	storage, err := dbstorage.NewDB(dbConfig)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer storage.Close()
+
+	fmt.Println("установлено соединение с базой данных", dbConfig.Database)
 
 	r := chi.NewRouter()             //инициализируем роутер
 	r.Use(mwlogger.NewMwLogger(log)) //маршрут в middleware за логированием
 	r.Use(gzipper.NewMwGzipper(log)) //работа со сжатыми запросами/сжатие ответов
-	r.Use(middleware.RequestID)      
+	r.Use(middleware.RequestID)
 
 	r.Get("/{alias}", geturl.GetURL(log, mapURL))
 	r.Post("/", saveurl.PostURL(log, mapURL))
 	r.Post("/api/shorten", saveurljson.PostURLjson(log, mapURL))
+	r.Get("/ping", getpingdb.GetPingDB(log, storage))
 
 	srv := &http.Server{
 		Addr:         config.FlagServerPort,
