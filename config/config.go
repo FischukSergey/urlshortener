@@ -24,7 +24,7 @@ func ParseFlags() {
 	defaultRunAddr := ipAddr + ":8080"
 	defaultBaseURL := "http://" + defaultRunAddr
 	defaultFileStoragePath := "./tmp/short-url-db.json"
-	defaultDatabaseDSN := "urlshortdb"
+	defaultDatabaseDSN := "" //"urlshortdb"
 
 	flag.StringVar(&FlagServerPort, "a", defaultRunAddr, "address and port to run server")
 	flag.StringVar(&FlagBaseURL, "b", defaultBaseURL, "base redirect path")

@@ -20,9 +20,16 @@ test:
 				#go test ./internal/app/handlers/saveurl/
 .PHONY: test
 
+autotest:
+				@echo "Runing autotest"
+				go build -o ./cmd/shortener/shortener ./cmd/shortener/*.go
+				./shortenertestbeta-darwin-arm64 -test.v -test.run=^TestIteration10$ -binary-path=cmd/shortener/shortener -file-storage-path=tmp/short-url-db.json -source-path=tmp/short-url-db.json -database-dsn=urlshortdb
+.PHONY: autotest
+
 # curl -v -X GET 'http://localhost:8080/map'
 # curl -v -d "http://yandex.ru" -X POST 'http://localhost:8080/'
 # curl -v -d '{"url": "https://codewars.com"}' -H "Content-Type: application/json" POST 'http://localhost:8080/api/shorten'
 # curl -v -X GET 'http://localhost:8080/map' -H "Accept-Encoding: gzip"
 # /Users/sergeymac/dev/urlshortener/shortenertestbeta-darwin-arm64 -test.v -test.run=^TestIteration9$ -binary-path=cmd/shortener/shortener -file-storage-path=tmp/short-url-db.json -source-path=tmp/short-url-db.json -database-dsn=urlshortdb
 # pg_ctl -D /usr/local/pgsql/data stop
+# go build -o shortener *.go
