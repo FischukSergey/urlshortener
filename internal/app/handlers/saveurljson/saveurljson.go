@@ -1,6 +1,7 @@
 package saveurljson
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -15,7 +16,7 @@ import (
 )
 
 type URLSaverJSON interface {
-	SaveStorageURL(alias, URL string) error
+	SaveStorageURL(ctx context.Context, alias, URL string) error
 	GetStorageURL(alias string) (string, bool)
 }
 
@@ -79,7 +80,8 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 			return
 		}
 
-		err = storage.SaveStorageURL(alias, req.URL)
+		ctx := context.Background()
+		err = storage.SaveStorageURL(ctx, alias, req.URL)
 		if err != nil {
 			log.Error("Can't save JSON", err)
 		}

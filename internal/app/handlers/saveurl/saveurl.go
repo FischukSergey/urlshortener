@@ -1,6 +1,7 @@
 package saveurl
 
 import (
+	"context"
 	"io"
 	"log/slog"
 	"math/rand"
@@ -14,7 +15,7 @@ import (
 )
 
 type URLSaver interface {
-	SaveStorageURL(alias, URL string) error
+	SaveStorageURL(ctx context.Context, alias, URL string) error
 	GetStorageURL(alias string) (string, bool)
 }
 
@@ -53,7 +54,8 @@ func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 			return
 		}
 
-		_ = storage.SaveStorageURL(alias, string(body))
+		ctx := context.Background()
+		_ = storage.SaveStorageURL(ctx, alias, string(body))
 
 		msg = append(msg, config.FlagBaseURL)
 		msg = append(msg, alias)

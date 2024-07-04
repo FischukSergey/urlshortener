@@ -1,6 +1,7 @@
 package mapstorage
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
@@ -41,7 +42,7 @@ func (ds *DataStore) GetStorageURL(alias string) (string, bool) {
 }
 
 // SaveStorageURL(alias, URL string) метод записи в хранилище
-func (ds *DataStore) SaveStorageURL(alias, URL string) error {
+func (ds *DataStore) SaveStorageURL(ctx context.Context, alias, URL string) error {
 	ds.mx.Lock()
 	defer ds.mx.Unlock()
 	ds.URLStorage[alias] = URL
