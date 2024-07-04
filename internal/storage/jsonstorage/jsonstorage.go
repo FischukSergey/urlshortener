@@ -64,7 +64,7 @@ func NewJSONFileReader(filename string) (*JSONFileReader, error) {
 }
 
 //Метод ReadToMap() принимает мапу(пустую) и заполняет ее данными из json файла
-func (fr *JSONFileReader) ReadToMap(mapURL map[string]string) (map[string]string, error) { //чтение файла в мапу до запуска сервера, поэтому работаем без mutex
+func (fr *JSONFileReader) ReadToMap(mapURL map[string]string) error{ //(map[string]string, error) { //чтение файла в мапу до запуска сервера, поэтому работаем без mutex
 	defer fr.file.Close()
 
 	for fr.ScanRaw.Scan() { //построчно читаем, декодируем и пишем в мапу
@@ -73,7 +73,7 @@ func (fr *JSONFileReader) ReadToMap(mapURL map[string]string) (map[string]string
 		err := json.Unmarshal(data, &mapLine)
 		if err != nil {
 			fmt.Println("Не удалось декодировать строку:", data)
-			return nil, err
+			return err //nil, err
 		}
 		if _, ok := mapURL[mapLine.ShortURL]; ok {
 			fmt.Printf("Алиас %s дублируется:\n", mapLine.ShortURL)
@@ -81,7 +81,7 @@ func (fr *JSONFileReader) ReadToMap(mapURL map[string]string) (map[string]string
 			mapURL[mapLine.ShortURL] = mapLine.OriginalURL
 		}
 	}
-	return mapURL, nil
+	return nil //mapURL, nil
 }
 
 func (fr *JSONFileReader) Close() error {
