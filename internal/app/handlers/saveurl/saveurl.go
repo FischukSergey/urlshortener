@@ -13,14 +13,9 @@ import (
 )
 
 type URLSaver interface {
-	SaveStorageURL(alias, URL string)
+	SaveStorageURL(alias, URL string) error
 	GetStorageURL(alias string) (string, bool)
 }
-
-// type Request struct { //структура запроса на будущее
-// 	URL   string
-// 	Alias string
-// }
 
 const aliasLength = 8 //для генератора случайного алиаса
 
@@ -57,7 +52,7 @@ func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 			return
 		}
 
-		storage.SaveStorageURL(alias, string(body))
+		_ = storage.SaveStorageURL(alias, string(body))
 
 		msg = append(msg, config.FlagBaseURL)
 		msg = append(msg, alias)
