@@ -41,7 +41,7 @@ func main() {
 		var dbConfig = config.DBConfig{
 			User:     "postgres",
 			Password: "postgres", //TODO заменить на переменную окружения
-			Host:     "localhost",
+			Host:     "127.0.0.1",
 			Port:     "5432",
 			Database: config.FlagDatabaseDSN,
 		}

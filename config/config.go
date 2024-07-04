@@ -9,7 +9,7 @@ var ipAddr string = "localhost" //адрес сервера
 var FlagServerPort string       //адрес сервера и порта
 var FlagBaseURL string          //базовый адрес для редиректа
 var FlagFileStoragePath string  //базовый путь хранения файла db json
-var FlagDatabaseDSN string     //наименование базы данных
+var FlagDatabaseDSN string      //наименование базы данных
 
 type DBConfig struct {
 	User     string // = "postgres"
@@ -24,7 +24,7 @@ func ParseFlags() {
 	defaultRunAddr := ipAddr + ":8080"
 	defaultBaseURL := "http://" + defaultRunAddr
 	defaultFileStoragePath := "./tmp/short-url-db.json"
-	defaultDatabaseDSN := "" //"urlshortdb"
+	defaultDatabaseDSN := "urlshortdb"
 
 	flag.StringVar(&FlagServerPort, "a", defaultRunAddr, "address and port to run server")
 	flag.StringVar(&FlagBaseURL, "b", defaultBaseURL, "base redirect path")
@@ -46,8 +46,8 @@ func ParseFlags() {
 		FlagFileStoragePath = envFlagFileStoragePath
 	}
 
-	if envDatabaseDSN,ok := os.LookupEnv("DATABASE_DSN"); ok {
-	// if envDatabaseDSN := os.Getenv("DATABASE_DSN"); envDatabaseDSN != "" {
+	if envDatabaseDSN, ok := os.LookupEnv("DATABASE_DSN"); ok {
+		// if envDatabaseDSN := os.Getenv("DATABASE_DSN"); envDatabaseDSN != "" {
 		FlagDatabaseDSN = envDatabaseDSN
 	}
 }

@@ -16,7 +16,7 @@ import (
 
 type URLSaver interface {
 	SaveStorageURL(ctx context.Context, alias, URL string) error
-	GetStorageURL(alias string) (string, bool)
+	GetStorageURL(ctx context.Context, alias string) (string, bool)
 }
 
 const aliasLength = 8 //для генератора случайного алиаса
@@ -48,15 +48,20 @@ func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 
 		alias = NewRandomString(aliasLength) //генерируем произвольный алиас длины {aliasLength}
 
-		if _, ok := storage.GetStorageURL(alias); ok {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		if _, ok := storage.GetStorageURL(ctx, alias); ok {
 			http.Error(w, "alias already exist", http.StatusConflict)
 			log.Error("Can't add, alias already exist", slog.String("alias:", alias))
 			return
 		}
 
-		ctx := context.Background()
-		_ = storage.SaveStorageURL(ctx, alias, string(body))
-
+		err = storage.SaveStorageURL(ctx, alias, string(body))
+		if err != nil {
+			http.Error(w, "Error write DB", http.StatusInternalServerError)
+			log.Error("Error write DB", err)
+			return
+		}
 		msg = append(msg, config.FlagBaseURL)
 		msg = append(msg, alias)
 		newPath = strings.Join(msg, "/")

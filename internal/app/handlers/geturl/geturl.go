@@ -1,18 +1,19 @@
 package geturl
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi"
 )
 
-type URLGetter interface{  //имплементирует интерфейс с методом поиска по хранилищу
-	GetStorageURL(alias string) (string, bool)
+type URLGetter interface { //имплементирует интерфейс с методом поиска по хранилищу
+	GetStorageURL(ctx context.Context, alias string) (string, bool)
 }
 
-
-//GetURL хендлер запроса (GET{ID}) полного URL по его алиасу
+// GetURL хендлер запроса (GET{ID}) полного URL по его алиасу
 func GetURL(log *slog.Logger, storage URLGetter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -25,8 +26,11 @@ func GetURL(log *slog.Logger, storage URLGetter) http.HandlerFunc {
 			http.Error(w, "alias is empty", http.StatusBadRequest)
 			return
 		}
+		
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		url, ok := storage.GetStorageURL(ctx, alias)
 
-		url, ok := storage.GetStorageURL(alias)
 		if !ok {
 			http.Error(w, "alias not found", http.StatusBadRequest)
 			log.Error("alias not found", slog.String("alias:", alias))

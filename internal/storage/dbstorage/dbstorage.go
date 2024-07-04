@@ -59,7 +59,7 @@ func (s *Storage) GetPingDB() error {
 }
 
 // GetStorageURL() метод получения URL по алиасу
-func (s *Storage) GetStorageURL(alias string) (string, bool) {
+func (s *Storage) GetStorageURL(ctx context.Context, alias string) (string, bool) {
 	const where = "dbstorage.GetStorageURL"
 	log = log.With(slog.String("method from", where))
 
@@ -107,7 +107,6 @@ func (s *Storage) SaveStorageURL(ctx context.Context, alias, URL string) error {
 
 	return tx.Commit()
 }
-
 
 func (s *Storage) Close() {
 	s.db.Close()

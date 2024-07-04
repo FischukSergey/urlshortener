@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurl"
@@ -17,7 +18,7 @@ import (
 
 type URLSaverJSON interface {
 	SaveStorageURL(ctx context.Context, alias, URL string) error
-	GetStorageURL(alias string) (string, bool)
+	GetStorageURL(ctx context.Context, alias string) (string, bool)
 }
 
 type Request struct {
@@ -70,7 +71,10 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 		}
 
 		alias = saveurl.NewRandomString(8) //поправить
-		if _, ok := storage.GetStorageURL(alias); ok {
+
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		if _, ok := storage.GetStorageURL(ctx, alias); ok {
 			log.Error("Can't add, alias already exist", slog.String("alias:", alias))
 
 			w.WriteHeader(http.StatusConflict)
@@ -80,10 +84,10 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 			return
 		}
 
-		ctx := context.Background()
 		err = storage.SaveStorageURL(ctx, alias, req.URL)
 		if err != nil {
 			log.Error("Can't save JSON", err)
+			return
 		}
 
 		msg = append(msg, config.FlagBaseURL)
