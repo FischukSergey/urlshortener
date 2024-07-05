@@ -24,7 +24,7 @@ func ParseFlags() {
 	defaultRunAddr := ipAddr + ":8080"
 	defaultBaseURL := "http://" + defaultRunAddr
 	defaultFileStoragePath := "./tmp/short-url-db.json"
-	defaultDatabaseDSN := "" //"urlshortdb"
+	defaultDatabaseDSN := "urlshortdb"
 
 	flag.StringVar(&FlagServerPort, "a", defaultRunAddr, "address and port to run server")
 	flag.StringVar(&FlagBaseURL, "b", defaultBaseURL, "base redirect path")
@@ -41,13 +41,13 @@ func ParseFlags() {
 		FlagBaseURL = envBaseURL
 	}
 
-	if envFlagFileStoragePath, ok := os.LookupEnv("FILE_STORAGE_PATH"); ok {
-		// if envFlagFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFlagFileStoragePath != "" {
+	//if envFlagFileStoragePath, ok := os.LookupEnv("FILE_STORAGE_PATH"); ok {
+	if envFlagFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFlagFileStoragePath != "" {
 		FlagFileStoragePath = envFlagFileStoragePath
 	}
 
-	if envDatabaseDSN, ok := os.LookupEnv("DATABASE_DSN"); ok {
-		// if envDatabaseDSN := os.Getenv("DATABASE_DSN"); envDatabaseDSN != "" {
+	//if envDatabaseDSN, ok := os.LookupEnv("DATABASE_DSN"); ok {
+	if envDatabaseDSN := os.Getenv("DATABASE_DSN"); envDatabaseDSN != "" {
 		FlagDatabaseDSN = envDatabaseDSN
 	}
 }
