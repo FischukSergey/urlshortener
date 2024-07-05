@@ -24,7 +24,7 @@ func ParseFlags() {
 	defaultRunAddr := ipAddr + ":8080"
 	defaultBaseURL := "http://" + defaultRunAddr
 	defaultFileStoragePath := "./tmp/short-url-db.json"
-	defaultDatabaseDSN := "user=postgres password=postgres host=localhost port=5432 dbname=urlshortdb sslmode=disable"
+	defaultDatabaseDSN := "" //"user=postgres password=postgres host=localhost port=5432 dbname=urlshortdb sslmode=disable"
 
 	flag.StringVar(&FlagServerPort, "a", defaultRunAddr, "address and port to run server")
 	flag.StringVar(&FlagBaseURL, "b", defaultBaseURL, "base redirect path")
