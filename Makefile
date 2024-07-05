@@ -3,10 +3,16 @@ ipAddr:=localhost:8080
 envRunAddr:=SERVER_ADDRESS=$(ipAddr)
 envBaseURL:=BASE_URL=http://$(ipAddr)
 envFlagFileStoragePath:=FILE_STORAGE_PATH="./tmp/short-url-db.json"
+envDatabaseDSN:=DATABASE_DSN="user=postgres password=postgres host=localhost port=5432 dbname=urlshortdb sslmode=disable"
 
 server:
 				@echo "Running server"
 				$(envRunAddr) $(envBaseURL) $(envFlagFileStoragePath) go run ./cmd/shortener/main.go
+.PHONY: server
+
+db:
+				@echo "Running server"
+				$(envRunAddr) $(envBaseURL) $(envDatabaseDSN) go run ./cmd/shortener/main.go
 .PHONY: server
 
 defaultserver:

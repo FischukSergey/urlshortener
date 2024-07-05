@@ -41,13 +41,16 @@ func ParseFlags() {
 		FlagBaseURL = envBaseURL
 	}
 
-	//if envFlagFileStoragePath, ok := os.LookupEnv("FILE_STORAGE_PATH"); ok {
-	if envFlagFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFlagFileStoragePath != "" {
+	if envFlagFileStoragePath, ok := os.LookupEnv("FILE_STORAGE_PATH"); ok {
+	// if envFlagFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFlagFileStoragePath != "" {
 		FlagFileStoragePath = envFlagFileStoragePath
+	}else{
+		FlagFileStoragePath=""
 	}
 
-	//if envDatabaseDSN, ok := os.LookupEnv("DATABASE_DSN"); ok {
-	if envDatabaseDSN := os.Getenv("DATABASE_DSN"); envDatabaseDSN != "" {
+	envDatabaseDSN, ok := os.LookupEnv("DATABASE_DSN")
+	if  ok && envDatabaseDSN!="" {
+	//if envDatabaseDSN := os.Getenv("DATABASE_DSN"); envDatabaseDSN != "" {
 		FlagDatabaseDSN = envDatabaseDSN
 	}
 }
