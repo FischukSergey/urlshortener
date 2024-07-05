@@ -43,7 +43,7 @@ func main() {
 			Password: "postgres", //TODO заменить на переменную окружения
 			Host:     "localhost",
 			Port:     "5432",
-			Database: config.FlagDatabaseDSN,
+			Database: "urlshortdb",
 		}
 		storage, err := dbstorage.NewDB(dbConfig)
 		if err != nil {

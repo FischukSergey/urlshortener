@@ -23,10 +23,10 @@ var log = slog.New(
 // NewDB() создаем объект базы данных postgres
 func NewDB(dbConfig config.DBConfig) (*Storage, error) {
 
-	dbconn := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable",
-		dbConfig.User, dbConfig.Password, dbConfig.Host, dbConfig.Port, dbConfig.Database)
+	// dbconn := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable",
+	// 	dbConfig.User, dbConfig.Password, dbConfig.Host, dbConfig.Port, dbConfig.Database)
 
-	db, err := sql.Open("pgx", dbconn)
+	db, err := sql.Open("pgx", config.FlagDatabaseDSN)
 	if err != nil {
 		return nil, fmt.Errorf("%s, unable to create connection db:%s", err, dbConfig.Database)
 	}
