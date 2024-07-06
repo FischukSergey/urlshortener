@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/FischukSergey/urlshortener.git/config"
-	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurl"
+	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
 	"github.com/go-chi/render"
 )
 
@@ -70,7 +70,7 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 			return
 		}
 
-		alias = saveurl.NewRandomString(8) //поправить
+		alias = utilitys.NewRandomString(config.AliasLength) //поправить
 
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()

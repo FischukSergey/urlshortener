@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/FischukSergey/urlshortener.git/config"
+	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/batch"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/getpingdb"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/geturl"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurl"
@@ -55,9 +56,10 @@ func main() {
 
 		// инициализируем обработчики
 		r.Get("/{alias}", geturl.GetURL(log, storage))
+		r.Get("/ping", getpingdb.GetPingDB(log, storage))
 		r.Post("/", saveurl.PostURL(log, storage))
 		r.Post("/api/shorten", saveurljson.PostURLjson(log, storage))
-		r.Get("/ping", getpingdb.GetPingDB(log, storage))
+		r.Post("/api/shorten/batch", batch.PostBatch(log, storage))
 
 	case config.FlagFileStoragePath != "": //работаем с json файлом если нет DB
 
@@ -78,11 +80,13 @@ func main() {
 		r.Get("/{alias}", geturl.GetURL(log, mapURL))
 		r.Post("/", saveurl.PostURL(log, mapURL))
 		r.Post("/api/shorten", saveurljson.PostURLjson(log, mapURL))
+		r.Post("/api/shorten/batch", batch.PostBatch(log, mapURL))
 
 	default: //работаем просто с мапой
 		r.Get("/{alias}", geturl.GetURL(log, mapURL))
 		r.Post("/", saveurl.PostURL(log, mapURL))
 		r.Post("/api/shorten", saveurljson.PostURLjson(log, mapURL))
+		r.Post("/api/shorten/batch", batch.PostBatch(log, mapURL))
 
 	}
 

@@ -5,6 +5,10 @@ import (
 	"os"
 )
 
+const (
+	AliasLength int=8
+)
+
 var ipAddr string = "localhost" //адрес сервера
 var FlagServerPort string       //адрес сервера и порта
 var FlagBaseURL string          //базовый адрес для редиректа

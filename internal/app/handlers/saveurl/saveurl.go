@@ -4,13 +4,13 @@ import (
 	"context"
 	"io"
 	"log/slog"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
 	"github.com/FischukSergey/urlshortener.git/config"
+	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
 	"github.com/go-chi/chi/middleware"
 )
 
@@ -46,7 +46,7 @@ func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 			return
 		}
 
-		alias = NewRandomString(aliasLength) //генерируем произвольный алиас длины {aliasLength}
+		alias = utilitys.NewRandomString(config.AliasLength) //генерируем произвольный алиас длины {aliasLength}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
@@ -78,18 +78,3 @@ func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 	}
 }
 
-// NewRandomString generates random string with given size.
-func NewRandomString(size int) string {
-	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	chars := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-		"abcdefghijklmnopqrstuvwxyz" +
-		"0123456789")
-
-	b := make([]rune, size)
-	for i := range b {
-		b[i] = chars[rnd.Intn(len(chars))]
-	}
-
-	return string(b)
-}
