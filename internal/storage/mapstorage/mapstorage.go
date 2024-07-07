@@ -42,24 +42,29 @@ func (ds *DataStore) GetStorageURL(ctx context.Context, alias string) (string, b
 }
 
 // SaveStorageURL(alias, URL string) метод записи в хранилище
-func (ds *DataStore) SaveStorageURL(ctx context.Context, alias, URL string) error {
-	ds.mx.Lock()
-	defer ds.mx.Unlock()
-	ds.URLStorage[alias] = URL
+func (ds *DataStore) SaveStorageURL(ctx context.Context, saveURL []config.SaveShortURL) error {
 
-	//пишем параллельно в текстовый файл json строку
-	if config.FlagFileStoragePath != "" {
+	ds.mx.Lock() //блокируем мапу
+	defer ds.mx.Unlock()
+	for _, s := range saveURL {
+		// пишем в мапу
+		ds.URLStorage[s.ShortURL] = s.OriginalURL
+	}
+
+	if config.FlagFileStoragePath != "" { //открываем файл для записи
 		jsonDB, err := jsonstorage.NewJSONFileWriter(config.FlagFileStoragePath)
 		if err != nil {
-			// log.Error("Error opening the file 'short-url-db.json'", err)
 			return fmt.Errorf("%s. Error opening the file: %s ", err, config.FlagFileStoragePath)
 		}
 		defer jsonDB.Close()
-
-		if err = jsonDB.Write(alias, URL); err != nil {
-			log.Error("Error writing to the file 'short-url-db.json'", err)
+		for _, s := range saveURL {
+			//пишем в текстовый файл json строку
+			if err = jsonDB.Write(s.ShortURL, s.OriginalURL); err != nil {
+				log.Error("Error writing to the file 'short-url-db.json'", err)
+			}
 		}
 	}
+
 	return nil
 }
 

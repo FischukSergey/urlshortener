@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	AliasLength int=8
+	AliasLength int = 8
 )
 
 var ipAddr string = "localhost" //адрес сервера
@@ -21,6 +21,11 @@ type DBConfig struct {
 	Host     string // = "localhost"
 	Port     string // = "5432"
 	Database string // = "urlshortdb"
+}
+
+type SaveShortURL struct { //структура для записи сокращенных urlов в хранилища
+	ShortURL    string
+	OriginalURL string
 }
 
 func ParseFlags() {
@@ -46,15 +51,15 @@ func ParseFlags() {
 	}
 
 	if envFlagFileStoragePath, ok := os.LookupEnv("FILE_STORAGE_PATH"); ok {
-	// if envFlagFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFlagFileStoragePath != "" {
+		// if envFlagFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFlagFileStoragePath != "" {
 		FlagFileStoragePath = envFlagFileStoragePath
-	}else{
-		FlagFileStoragePath=""
+	} else {
+		FlagFileStoragePath = ""
 	}
 
 	envDatabaseDSN, ok := os.LookupEnv("DATABASE_DSN")
-	if  ok && envDatabaseDSN!="" {
-	//if envDatabaseDSN := os.Getenv("DATABASE_DSN"); envDatabaseDSN != "" {
+	if ok && envDatabaseDSN != "" {
+		//if envDatabaseDSN := os.Getenv("DATABASE_DSN"); envDatabaseDSN != "" {
 		FlagDatabaseDSN = envDatabaseDSN
 	}
 }

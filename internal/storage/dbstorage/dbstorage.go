@@ -85,14 +85,17 @@ func (s *Storage) GetStorageURL(ctx context.Context, alias string) (string, bool
 }
 
 // SaveStorage() метод сохранения alias в BD
-func (s *Storage) SaveStorageURL(ctx context.Context, alias, URL string) error {
+func (s *Storage) SaveStorageURL(ctx context.Context, saveURL []config.SaveShortURL) error {
 	const op = "dbstorage.SaveStorageURL"
+	
+	//начинаем транзакцию записи в БД
 	tx, err := s.db.Begin()
 	if err != nil {
 		return fmt.Errorf("%s не удалось начать транзакцию записи в базу %s", op, err)
 	}
 	defer tx.Rollback()
 
+	//готовим запрос на вставку
 	stmt, err := tx.PrepareContext(ctx,
 		"INSERT INTO urlshort (alias,url) VALUES($1,$2)")
 	if err != nil {
@@ -100,9 +103,12 @@ func (s *Storage) SaveStorageURL(ctx context.Context, alias, URL string) error {
 	}
 	defer stmt.Close()
 
-	_, err = stmt.ExecContext(ctx, alias, URL)
-	if err != nil {
-		return fmt.Errorf("%s не удалось выполнить транзакцию записи в базу %s", op, err)
+	//пишем слайс urlов в базу данных
+	for _, s := range saveURL {  
+		_, err = stmt.ExecContext(ctx, s.ShortURL, s.OriginalURL)
+		if err != nil {
+			return fmt.Errorf("%s не удалось выполнить транзакцию записи в базу %s", op, err)
+		}
 	}
 
 	return tx.Commit()

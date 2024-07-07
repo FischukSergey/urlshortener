@@ -17,7 +17,7 @@ import (
 )
 
 type URLSaverJSON interface {
-	SaveStorageURL(ctx context.Context, alias, URL string) error
+	SaveStorageURL(ctx context.Context, saveURL []config.SaveShortURL) error
 	GetStorageURL(ctx context.Context, alias string) (string, bool)
 }
 
@@ -36,6 +36,7 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		log.Debug("Handler: PostURLjson")
+		var saveURL []config.SaveShortURL
 		var alias, newPath string
 		var msg []string
 		var req Request
@@ -84,7 +85,12 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 			return
 		}
 
-		err = storage.SaveStorageURL(ctx, alias, req.URL)
+		saveURL = append(saveURL, config.SaveShortURL{
+			ShortURL:    alias,
+			OriginalURL: req.URL,
+		})
+
+		err = storage.SaveStorageURL(ctx, saveURL)
 		if err != nil {
 			log.Error("Can't save JSON", err)
 			return

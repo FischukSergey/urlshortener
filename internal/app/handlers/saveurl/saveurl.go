@@ -15,7 +15,7 @@ import (
 )
 
 type URLSaver interface {
-	SaveStorageURL(ctx context.Context, alias, URL string) error
+	SaveStorageURL(ctx context.Context, saveURL []config.SaveShortURL) error
 	GetStorageURL(ctx context.Context, alias string) (string, bool)
 }
 
@@ -26,6 +26,7 @@ func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		log.Debug("Handler: PostURL")
+		var saveURL []config.SaveShortURL
 		var alias, newPath string // 	инициализируем пустой алиас
 		var msg []string
 
@@ -56,7 +57,12 @@ func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 			return
 		}
 
-		err = storage.SaveStorageURL(ctx, alias, string(body))
+		saveURL = append(saveURL, config.SaveShortURL{
+			ShortURL:    alias,
+			OriginalURL: string(body),
+		})
+
+		err = storage.SaveStorageURL(ctx, saveURL)
 		if err != nil {
 			http.Error(w, "Error write DB", http.StatusInternalServerError)
 			log.Error("Error write DB", err)
@@ -77,4 +83,3 @@ func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 		)
 	}
 }
-
