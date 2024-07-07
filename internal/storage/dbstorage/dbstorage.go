@@ -63,7 +63,7 @@ func (s *Storage) GetStorageURL(ctx context.Context, alias string) (string, bool
 	const where = "dbstorage.GetStorageURL"
 	log = log.With(slog.String("method from", where))
 
-	stmt, err := s.db.Prepare("SELECT url FROM urlshort WHERE alias=$1")
+	stmt, err := s.db.PrepareContext(ctx, "SELECT url FROM urlshort WHERE alias=$1")
 	if err != nil {
 		log.Error("unable to prepare query")
 		return "", false
@@ -72,7 +72,7 @@ func (s *Storage) GetStorageURL(ctx context.Context, alias string) (string, bool
 
 	var resURL string
 
-	err = stmt.QueryRow(alias).Scan(&resURL)
+	err = stmt.QueryRowContext(ctx, alias).Scan(&resURL)
 	if errors.Is(err, sql.ErrNoRows) {
 		log.Error("row not found")
 		return "", false

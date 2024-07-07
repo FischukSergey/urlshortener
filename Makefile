@@ -29,7 +29,8 @@ test:
 autotest:
 				@echo "Runing autotest"
 				go build -o ./cmd/shortener/shortener ./cmd/shortener/*.go
-				./shortenertestbeta-darwin-arm64 -test.v -test.run=^TestIteration10$ -binary-path=cmd/shortener/shortener -file-storage-path=tmp/short-url-db.json -source-path=tmp/short-url-db.json -database-dsn=urlshortdb
+				
+				/Users/sergeymac/dev/urlshortener/shortenertestbeta-darwin-arm64 -test.v -test.run=^TestIteration12$ -binary-path=cmd/shortener/shortener -file-storage-path=tmp/short-url-db.json -source-path=./ -database-dsn='user=postgres password=postgres host=localhost port=5432 dbname=urlshortdb sslmode=disable'
 .PHONY: autotest
 
 # curl -v -X GET 'http://localhost:8080/map'

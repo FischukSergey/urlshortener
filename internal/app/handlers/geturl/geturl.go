@@ -27,7 +27,7 @@ func GetURL(log *slog.Logger, storage URLGetter) http.HandlerFunc {
 			return
 		}
 		
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 		url, ok := storage.GetStorageURL(ctx, alias)
 

@@ -75,12 +75,14 @@ func PostBatch(log *slog.Logger, storage BatchSaver) http.HandlerFunc {
 				return
 			}
 			response = append(response, Response{CorrelationID: req.CorrelationID,
-				ShortURL: alias})
+				ShortURL: config.FlagBaseURL+"/"+alias})
+			log.Info("Request create", slog.String("short_url", alias), slog.String("correlation_id", req.CorrelationID))
+		}
 
+		if len(response) > 0 {
+			w.WriteHeader(http.StatusCreated)
 			render.JSON(w, r, response)
-
 			log.Info("Request POST batch json successful", slog.String("IDrequest", middleware.GetReqID(r.Context())))
-
 		}
 
 	}
