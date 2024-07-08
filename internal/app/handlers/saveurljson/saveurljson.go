@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/FischukSergey/urlshortener.git/config"
+	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
 	"github.com/go-chi/render"
 )
@@ -91,6 +92,21 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 		})
 
 		err = storage.SaveStorageURL(ctx, saveURL)
+
+		//обработка ошибки вставки уже существующего url
+		var res []string
+		if errors.Is(err, dbstorage.ErrURLExists) {
+			res = strings.Split(err.Error(), ":")
+			w.WriteHeader(http.StatusConflict)
+			render.JSON(w, r, Response{
+				Result: config.FlagBaseURL + "/" + res[0],
+			})
+			log.Error("Request POST /api/shorten failed, url exists",
+				slog.String("url", saveURL[0].OriginalURL),
+			)
+			return
+		}
+
 		if err != nil {
 			log.Error("Can't save JSON", err)
 			return
@@ -110,10 +126,6 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 			log.Error("Can't make JSON", err)
 		}
 		w.Write(resp)
-
-		// render.JSON(w, r, Response{
-		// 	Result: newPath,
-		// })
 
 		log.Info("Request POST json successful", slog.String("json:", string(resp)))
 	}

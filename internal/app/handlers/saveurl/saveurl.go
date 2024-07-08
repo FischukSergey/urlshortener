@@ -2,6 +2,7 @@ package saveurl
 
 import (
 	"context"
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/FischukSergey/urlshortener.git/config"
+	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
 	"github.com/go-chi/chi/middleware"
 )
@@ -18,8 +20,6 @@ type URLSaver interface {
 	SaveStorageURL(ctx context.Context, saveURL []config.SaveShortURL) error
 	GetStorageURL(ctx context.Context, alias string) (string, bool)
 }
-
-const aliasLength = 8 //для генератора случайного алиаса
 
 // PostURL хендлер добавления (POST) сокращенного URL
 func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
@@ -63,16 +63,29 @@ func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 		})
 
 		err = storage.SaveStorageURL(ctx, saveURL)
+		//обработка ошибки вставки уже существующего url
+		var res []string
+		if errors.Is(err, dbstorage.ErrURLExists) {
+			res = strings.Split(err.Error(), ":")
+			w.WriteHeader(http.StatusConflict)
+			w.Header().Set("Content-Type", "text/plain")
+			w.Write([]byte(config.FlagBaseURL + "/" + res[0]))
+			log.Error("Request POST failed, url exists",
+				slog.String("url", saveURL[0].OriginalURL),
+			)
+			return
+		}
+
 		if err != nil {
 			http.Error(w, "Error write DB", http.StatusInternalServerError)
 			log.Error("Error write DB", err)
 			return
 		}
+
+		//если ошибок нет, формируем ответ
 		msg = append(msg, config.FlagBaseURL)
 		msg = append(msg, alias)
 		newPath = strings.Join(msg, "/")
-
-		// fmt.Println(UrlStorage) //отладка убрать
 
 		w.WriteHeader(http.StatusCreated)
 		w.Header().Set("Content-Type", "text/plain")

@@ -54,7 +54,7 @@ func (ds *DataStore) SaveStorageURL(ctx context.Context, saveURL []config.SaveSh
 	if config.FlagFileStoragePath != "" { //открываем файл для записи
 		jsonDB, err := jsonstorage.NewJSONFileWriter(config.FlagFileStoragePath)
 		if err != nil {
-			return fmt.Errorf("%s. Error opening the file: %s ", err, config.FlagFileStoragePath)
+			return fmt.Errorf("%w. Error opening the file: %s ", err, config.FlagFileStoragePath)
 		}
 		defer jsonDB.Close()
 		for _, s := range saveURL {
