@@ -7,9 +7,11 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/FischukSergey/urlshortener.git/config"
+	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
@@ -88,8 +90,22 @@ func PostBatch(log *slog.Logger, storage BatchSaver) http.HandlerFunc {
 
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
+			
 			err = storage.SaveStorageURL(ctx, saveURL) //пишем слайс в БД
+			
+			//обработка ошибки вставки уже существующего url
+			var res []string
+			if errors.Is(err, dbstorage.ErrURLExists) {
+				res = strings.Split(err.Error(), ":")
+				http.Error(w,"request failed, url exists",http.StatusConflict)
+				log.Error("Request POST /api/shorten failed, url exists",
+					slog.String("alias", res[0]),
+				)
+				return
+			}
+
 			if err != nil {
+				http.Error(w, "filed JSON batch", http.StatusInsufficientStorage)
 				log.Error("Can't save JSON batch", err)
 				return
 			}

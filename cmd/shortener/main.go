@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"time"
+	stdLOG "log"
 
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/batch"
@@ -20,6 +21,7 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/storage/mapstorage"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func main() {
@@ -39,20 +41,26 @@ func main() {
 
 	case config.FlagDatabaseDSN != "": //работаем с DB если есть переменная среды или флаг ком строки
 		// Инициализируем базу данных Postgres
-		var dbConfig = config.DBConfig{
-			User:     "postgres",
-			Password: "postgres", //TODO заменить на переменную окружения
-			Host:     "localhost",
-			Port:     "5432",
-			Database: "urlshortdb",
+		var DatabaseDSN *pgconn.Config
+		DatabaseDSN, err := pgconn.ParseConfig(config.FlagDatabaseDSN)
+		if err != nil {
+			stdLOG.Fatal("Ошибка парсинга строки инициализации БД Postgres")
 		}
-		storage, err := dbstorage.NewDB(dbConfig)
+
+		// var dbConfig = config.DBConfig{
+		// 	User:     "postgres",
+		// 	Password: "postgres", //TODO заменить на переменную окружения
+		// 	Host:     "localhost",
+		// 	Port:     "5432",
+		// 	Database: "urlshortdb",
+		// }
+		storage, err := dbstorage.NewDB(DatabaseDSN)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 		defer storage.Close()
-		log.Info("database connection", slog.String("database", dbConfig.Database))
+		log.Info("database connection", slog.String("database", DatabaseDSN.Database))
 
 		// инициализируем обработчики
 		r.Get("/{alias}", geturl.GetURL(log, storage))

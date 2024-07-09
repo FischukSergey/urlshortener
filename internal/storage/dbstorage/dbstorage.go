@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/FischukSergey/urlshortener.git/config"
@@ -26,12 +27,12 @@ var log = slog.New(
 )
 
 // NewDB() создаем объект базы данных postgres
-func NewDB(dbConfig config.DBConfig) (*Storage, error) {
+func NewDB(dbConfig *pgconn.Config) (*Storage, error) {
 
-	// dbconn := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable",
-	// 	dbConfig.User, dbConfig.Password, dbConfig.Host, dbConfig.Port, dbConfig.Database)
+	dbconn := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable",
+		dbConfig.User, dbConfig.Password, dbConfig.Host, strconv.Itoa(int(dbConfig.Port)), dbConfig.Database)
 
-	db, err := sql.Open("pgx", config.FlagDatabaseDSN)
+	db, err := sql.Open("pgx", dbconn) //config.FlagDatabaseDSN)
 	if err != nil {
 		return nil, fmt.Errorf("%w, unable to create connection db:%s", err, dbConfig.Database)
 	}
@@ -108,7 +109,7 @@ func (s *Storage) SaveStorageURL(ctx context.Context, saveURL []config.SaveShort
 
 	//готовим запрос на вставку
 	stmt, err := tx.PrepareContext(ctx,
-		"INSERT INTO urlshort (alias,url) VALUES($1,$2);") 
+		"INSERT INTO urlshort (alias,url) VALUES($1,$2);")
 	if err != nil {
 		return fmt.Errorf("%s: не удалось подготовить транзакцию записи в базу %w", op, err)
 	}
@@ -129,7 +130,7 @@ func (s *Storage) SaveStorageURL(ctx context.Context, saveURL []config.SaveShort
 					log.Error("url not found")
 					return fmt.Errorf("%s: %w", op, ErrURLExists)
 				}
-				return fmt.Errorf("%s: %w", shorturl, ErrURLExists) 
+				return fmt.Errorf("%s: %w", shorturl, ErrURLExists)
 			}
 			return fmt.Errorf("%s: не удалось выполнить транзакцию записи в базу %w", op, err)
 		}
