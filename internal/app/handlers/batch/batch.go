@@ -90,14 +90,14 @@ func PostBatch(log *slog.Logger, storage BatchSaver) http.HandlerFunc {
 
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
-			
+
 			err = storage.SaveStorageURL(ctx, saveURL) //пишем слайс в БД
-			
+
 			//обработка ошибки вставки уже существующего url
 			var res []string
 			if errors.Is(err, dbstorage.ErrURLExists) {
 				res = strings.Split(err.Error(), ":")
-				http.Error(w,"request failed, url exists",http.StatusConflict)
+				http.Error(w, "request failed, url exists", http.StatusConflict)
 				log.Error("Request POST /api/shorten failed, url exists",
 					slog.String("alias", res[0]),
 				)
@@ -113,7 +113,12 @@ func PostBatch(log *slog.Logger, storage BatchSaver) http.HandlerFunc {
 			w.WriteHeader(http.StatusCreated)
 			render.JSON(w, r, response) //отправляем json ответ
 			log.Info("Request POST batch json successful", slog.String("IDrequest", middleware.GetReqID(r.Context())))
-		}
 
+		}
+		//если в результате формирования слайса не оказалось валидных url
+		if len(response) == 0 || len(saveURL) == 0 {
+			http.Error(w, "request failed, no valid url", http.StatusBadRequest)
+			log.Error("Request POST /api/shorten failed, no valid url")
+		}
 	}
 }
