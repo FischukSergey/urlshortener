@@ -49,7 +49,7 @@ func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 
 		alias = utilitys.NewRandomString(config.AliasLength) //генерируем произвольный алиас длины {aliasLength}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 		defer cancel()
 		if _, ok := storage.GetStorageURL(ctx, alias); ok {
 			http.Error(w, "alias already exist", http.StatusConflict)
