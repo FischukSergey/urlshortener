@@ -75,7 +75,6 @@ func (s *Storage) GetPingDB() error {
 func (s *Storage) GetStorageURL(ctx context.Context, alias string) (string, bool) {
 	const where = "dbstorage.GetStorageURL"
 	log = log.With(slog.String("method from", where))
-
 	stmt, err := s.db.PrepareContext(ctx, "SELECT url FROM urlshort WHERE alias=$1")
 	if err != nil {
 		log.Error("unable to prepare query")
