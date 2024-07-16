@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
+	stdLOG "log"
 	"log/slog"
 	"net/http"
 	"os"
 	"time"
-	stdLOG "log"
 
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/batch"
@@ -14,6 +14,7 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/geturl"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurl"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurljson"
+	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/gzipper"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/mwlogger"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
@@ -33,6 +34,7 @@ func main() {
 	r := chi.NewRouter()             //инициализируем роутер и middleware
 	r.Use(mwlogger.NewMwLogger(log)) //маршрут в middleware за логированием
 	r.Use(gzipper.NewMwGzipper(log)) //работа со сжатыми запросами/сжатие ответов
+	r.Use(auth.NewMwToken(log))
 	r.Use(middleware.RequestID)
 
 	var mapURL = mapstorage.NewMap() //инициализируем мапу
