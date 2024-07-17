@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -15,7 +16,7 @@ type ctxKey int
 const (
 	TOKEN_EXP         = time.Hour * 3
 	SECRET_KEY        = "supersecretkey"
-	ctxKeyUser ctxKey = iota
+	CtxKeyUser ctxKey = iota
 )
 
 // Claims — структура утверждений, которая включает стандартные утверждения
@@ -28,7 +29,7 @@ type Claims struct {
 // BuildJWTString создаёт токен и возвращает его в виде строки.
 func BuildJWTString() (string, error) {
 	// создаём новый токен с алгоритмом подписи HS256 и утверждениями — Claims
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{ 
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			// когда создан токен
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(TOKEN_EXP)),
@@ -59,11 +60,11 @@ func GetUserId(tokenString string) int {
 	}
 
 	if !token.Valid {
-		fmt.Println("Token is not valid")
+		//fmt.Println("Token is not valid")
 		return -1
 	}
 
-	fmt.Println("Token is valid")
+	//fmt.Println("Token is valid")
 	return claims.UserID
 }
 
@@ -95,11 +96,22 @@ func NewMwToken(log *slog.Logger) func(next http.Handler) http.Handler {
 				log.Info("signed token create successfully")
 				return
 			}
+			//если метод не POST и куки не читается, возвращаем ошибку
+			if err != nil && r.Method != "POST" {
+				log.Error("can`t read cookie", err)
+				http.Error(w, "can`t read cookie", http.StatusBadRequest)
+				return
+			}
+			//если куки прочитался, но не валиден - возвращаем ошибку 401
+			if userId < 0 {
+				log.Error("bad request, id user absent")
+				http.Error(w, "bad request, id user not identity",http.StatusUnauthorized)
+				return
+			}
 
-			//TODO: если есть, проверяем на наличие ID
-			//TODO: если ID нет, то для методов POST создаем токен. Для метода GET возвращаем ошибку 401
-
-			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctxKeyUser, userId)))
+			//если все успешно - пишем в контекст ID пользователя
+			log.Info("token validate", slog.String("user ID:", strconv.Itoa(userId)))
+			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), CtxKeyUser, userId)))
 		}
 
 		return http.HandlerFunc(Authorize)

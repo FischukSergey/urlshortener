@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/FischukSergey/urlshortener.git/config"
+	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/getuserallurl"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -139,4 +140,12 @@ func (s *Storage) SaveStorageURL(ctx context.Context, saveURL []config.SaveShort
 
 func (s *Storage) Close() {
 	s.db.Close()
+}
+
+func (s *Storage) GetAllUserURL(ctx context.Context, userId int) ([]getuserallurl.AllURLUserID, error) {
+	const op = "dbstorage.GetAllUserURL"
+	var getUserURL []getuserallurl.AllURLUserID
+
+//TODO: логика запроса
+	return getUserURL,nil
 }
