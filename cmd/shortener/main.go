@@ -68,7 +68,7 @@ func main() {
 		// инициализируем обработчики
 		r.Get("/{alias}", geturl.GetURL(log, storage))
 		r.Get("/ping", getpingdb.GetPingDB(log, storage))
-		r.Get("/api/user/urls",getuserallurl.GetUserAllURL(log,storage))
+		r.Get("/api/user/urls", getuserallurl.GetUserAllURL(log, storage))
 		r.Post("/", saveurl.PostURL(log, storage))
 		r.Post("/api/shorten", saveurljson.PostURLjson(log, storage))
 		r.Post("/api/shorten/batch", batch.PostBatch(log, storage))

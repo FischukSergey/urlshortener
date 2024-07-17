@@ -13,14 +13,14 @@ import (
 	"github.com/go-chi/render"
 )
 
-type AllURLGetter interface { //интерфейс с методом поиска по хранилищу (только для БД)
-	GetAllUserURL(ctx context.Context, userId int) ([]AllURLUserID, error)
-}
-
 type AllURLUserID struct {
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 	//Error       string `json:"error,omitempty"`
+}
+
+type AllURLGetter interface { //интерфейс с методом поиска по хранилищу (только для БД)
+	GetAllUserURL(ctx context.Context, userId int) ([]AllURLUserID, error)
 }
 
 // GetUserAllURL хендлер запроса всех записей пользователя полного и сокращенного URL

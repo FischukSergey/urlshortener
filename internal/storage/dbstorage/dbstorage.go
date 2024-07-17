@@ -146,6 +146,6 @@ func (s *Storage) GetAllUserURL(ctx context.Context, userId int) ([]getuserallur
 	const op = "dbstorage.GetAllUserURL"
 	var getUserURL []getuserallurl.AllURLUserID
 
-//TODO: логика запроса
-	return getUserURL,nil
+	//TODO: логика запроса
+	return getUserURL, nil
 }
