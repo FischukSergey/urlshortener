@@ -162,10 +162,6 @@ func (s *Storage) GetAllUserURL(ctx context.Context, userID int) ([]getuserallur
 	defer stmt.Close()
 
 	result, err := stmt.QueryContext(ctx, userID)
-	if errors.Is(err, sql.ErrNoRows) {
-		log.Error("row not found")
-		return getUserURLs, fmt.Errorf("row for userid %d not found: %w", userID, err)
-	}
 	if err != nil {
 		log.Error("unable to execute query")
 		return getUserURLs, fmt.Errorf("unable to execute query: %w", err)
