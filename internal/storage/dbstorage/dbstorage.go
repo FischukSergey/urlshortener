@@ -143,7 +143,7 @@ func (s *Storage) Close() {
 	s.db.Close()
 }
 
-func (s *Storage) GetAllUserURL(ctx context.Context, userId int) ([]getuserallurl.AllURLUserID, error) {
+func (s *Storage) GetAllUserURL(ctx context.Context, userID int) ([]getuserallurl.AllURLUserID, error) {
 	const op = "dbstorage.GetAllUserURL"
 	log = log.With(slog.String("method from", op))
 

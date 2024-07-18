@@ -19,7 +19,7 @@ type AllURLUserID struct {
 }
 
 type AllURLGetter interface { //интерфейс с методом поиска по хранилищу (только для БД)
-	GetAllUserURL(ctx context.Context, userId int) ([]AllURLUserID, error)
+	GetAllUserURL(ctx context.Context, userID int) ([]AllURLUserID, error)
 }
 
 // GetUserAllURL хендлер запроса всех записей пользователя полного и сокращенного URL

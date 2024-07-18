@@ -14,8 +14,8 @@ import (
 type ctxKey int
 
 const (
-	TOKEN_EXP         = time.Hour * 3
-	SECRET_KEY        = "supersecretkey"
+	TokenExp         = time.Hour * 3
+	SecretKey        = "supersecretkey"
 	CtxKeyUser ctxKey = iota
 )
 
@@ -35,14 +35,14 @@ func BuildJWTString() (string, int, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			// когда создан токен
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(TOKEN_EXP)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(TokenExp)),
 		},
 		// собственное утверждение
 		UserID: id, //int(ctxKeyUser),
 	})
 
 	// создаём подписанную строку токена
-	tokenString, err := token.SignedString([]byte(SECRET_KEY))
+	tokenString, err := token.SignedString([]byte(SecretKey))
 	if err != nil {
 		return "", 0, err
 	}
@@ -52,11 +52,11 @@ func BuildJWTString() (string, int, error) {
 }
 
 // проверка валидности токена
-func GetUserId(tokenString string) int {
+func GetUserID(tokenString string) int {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims,
 		func(t *jwt.Token) (interface{}, error) {
-			return []byte(SECRET_KEY), nil
+			return []byte(SecretKey), nil
 		})
 	if err != nil {
 		return -1
@@ -77,16 +77,16 @@ func NewMwToken(log *slog.Logger) func(next http.Handler) http.Handler {
 		log.Info("middleware authorize started")
 
 		Authorize := func(w http.ResponseWriter, r *http.Request) {
-			var userId int
+			var userID int
 			tokenCookie, err := r.Cookie("session_token")
 
 			if err == nil { //если токен есть, проверим на валидность и получим ID
-				userId = GetUserId(tokenCookie.Value)
+				userID = GetUserID(tokenCookie.Value)
 			}
 
 			switch {
 			//если нет токена в куки или он не валиден, то создаем токен BuildJWTString для методов POST
-			case (userId == -1 || err != nil) && r.Method == "POST":
+			case (userID == -1 || err != nil) && r.Method == "POST":
 				valueCookie, id, err := BuildJWTString() //вызываем функцию создания и прерываем обработку если неудача
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
@@ -99,19 +99,19 @@ func NewMwToken(log *slog.Logger) func(next http.Handler) http.Handler {
 					Value: valueCookie,
 				})
 				log.Info("signed token create successfully")
-				userId = id //присваиваем новый ID
+				userID = id //присваиваем новый ID
 
 			case err != nil && r.Method != "POST": //если куки не прочитался и метод не POST
 				log.Error("can`t read cookie", err)
-				userId = -1 
+				userID = -1 
 
-			case userId==-1 && r.Method != "POST":
+			case userID==-1 && r.Method != "POST":
 				log.Error("id user from cookie absent or invalid")
 			}
 
 			//если все успешно - пишем в контекст ID пользователя
-			log.Info("token create or validate", slog.String("user ID:", strconv.Itoa(userId)))
-			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), CtxKeyUser, userId)))
+			log.Info("token create or validate", slog.String("user ID:", strconv.Itoa(userID)))
+			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), CtxKeyUser, userID)))
 		}
 
 		return http.HandlerFunc(Authorize)
