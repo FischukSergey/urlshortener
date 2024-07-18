@@ -30,7 +30,7 @@ autotest:
 				@echo "Runing autotest"
 				go build -o ./cmd/shortener/shortener ./cmd/shortener/*.go
 				
-				/Users/sergeymac/dev/urlshortener/shortenertestbeta-darwin-arm64 -test.v -test.run=^TestIteration13$ \
+				/Users/sergeymac/dev/urlshortener/shortenertestbeta-darwin-arm64 -test.v -test.run=^TestIteration14$ \
 				-binary-path=cmd/shortener/shortener \
 				-file-storage-path=tmp/short-url-db.json \
 				-source-path=./ \
