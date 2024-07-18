@@ -41,7 +41,8 @@ func NewDB(dbConfig *pgconn.Config) (*Storage, error) {
 	CREATE TABLE IF NOT EXISTS urlshort
 	  (id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     alias varchar NOT NULL UNIQUE,
-    url varchar NOT NULL);
+    url varchar NOT NULL,
+		userid integer);
 	`)
 	if err != nil {
 		return nil, fmt.Errorf("%w, unable to prepare query", err)
@@ -144,6 +145,8 @@ func (s *Storage) Close() {
 
 func (s *Storage) GetAllUserURL(ctx context.Context, userId int) ([]getuserallurl.AllURLUserID, error) {
 	const op = "dbstorage.GetAllUserURL"
+	log = log.With(slog.String("method from", op))
+
 	var getUserURL []getuserallurl.AllURLUserID
 
 	//TODO: логика запроса

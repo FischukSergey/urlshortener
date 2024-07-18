@@ -2,7 +2,6 @@ package getuserallurl
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -32,10 +31,9 @@ func GetUserAllURL(log *slog.Logger, storage AllURLGetter) http.HandlerFunc {
 
 		id := r.Context().Value(auth.CtxKeyUser).(int)
 
-		fmt.Println(id)
-		if id <= 0 { //ID проверяется в хендлере, здесь на всякий случай
-			log.Error("bad request, id user absent")
-			w.WriteHeader(http.StatusUnauthorized)
+		if id == -1 { //нет ID или не валидный куки
+			log.Error("bad request, not id user")
+			http.Error(w, "you haven`t id user", http.StatusUnauthorized)
 			return
 		}
 
@@ -55,8 +53,8 @@ func GetUserAllURL(log *slog.Logger, storage AllURLGetter) http.HandlerFunc {
 			return
 		}
 		//если все успешно
-		for i, resp:=range result{ //готовим нужный формат для ответа
-			result[i]=AllURLUserID{
+		for i, resp := range result { //готовим нужный формат для ответа
+			result[i] = AllURLUserID{
 				ShortURL: config.FlagBaseURL + "/" + resp.ShortURL,
 			}
 		}

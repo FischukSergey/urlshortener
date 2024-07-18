@@ -27,7 +27,10 @@ type Claims struct {
 }
 
 // BuildJWTString создаёт токен и возвращает его в виде строки.
-func BuildJWTString() (string, error) {
+func BuildJWTString() (string, int, error) {
+
+	id := 5 //TODO: сделать генерацию ID
+
 	// создаём новый токен с алгоритмом подписи HS256 и утверждениями — Claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -35,17 +38,17 @@ func BuildJWTString() (string, error) {
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(TOKEN_EXP)),
 		},
 		// собственное утверждение
-		UserID: 5, //int(ctxKeyUser),
+		UserID: id, //int(ctxKeyUser),
 	})
 
 	// создаём подписанную строку токена
 	tokenString, err := token.SignedString([]byte(SECRET_KEY))
 	if err != nil {
-		return "", err
+		return "", 0, err
 	}
 	fmt.Println(tokenString) //TODO: убрать
 	// возвращаем строку токена
-	return tokenString, nil
+	return tokenString, id, nil
 }
 
 // проверка валидности токена
@@ -77,12 +80,14 @@ func NewMwToken(log *slog.Logger) func(next http.Handler) http.Handler {
 			var userId int
 			tokenCookie, err := r.Cookie("session_token")
 
-			if err == nil {
-				userId = GetUserId(tokenCookie.Value) //проверим на валидность токен
+			if err == nil { //если токен есть, проверим на валидность и получим ID
+				userId = GetUserId(tokenCookie.Value)
 			}
-			//TODO: если нет токена в куки или он не валиден, то создаем токен BuildJWTString для методов POST
-			if (userId == -1 || err != nil) && r.Method == "POST" {
-				valueCookie, err := BuildJWTString() //вызываем функцию создания и прерываем обработку
+
+			switch {
+			//если нет токена в куки или он не валиден, то создаем токен BuildJWTString для методов POST
+			case (userId == -1 || err != nil) && r.Method == "POST":
+				valueCookie, id, err := BuildJWTString() //вызываем функцию создания и прерываем обработку если неудача
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 					log.Error("can`t create signed token", err)
@@ -91,26 +96,21 @@ func NewMwToken(log *slog.Logger) func(next http.Handler) http.Handler {
 
 				http.SetCookie(w, &http.Cookie{ //пишем подписанную куки в ответ запросу
 					Name:  "session_token",
-					Value: valueCookie, //дописать
+					Value: valueCookie,
 				})
 				log.Info("signed token create successfully")
-				return
-			}
-			//если метод не POST и куки не читается, возвращаем ошибку
-			if err != nil && r.Method != "POST" {
+				userId = id //присваиваем новый ID
+
+			case err != nil && r.Method != "POST": //если куки не прочитался и метод не POST
 				log.Error("can`t read cookie", err)
-				http.Error(w, "can`t read cookie", http.StatusBadRequest)
-				return
-			}
-			//если куки прочитался, но не валиден - возвращаем ошибку 401
-			if userId < 0 {
-				log.Error("bad request, id user absent")
-				http.Error(w, "bad request, id user not identity",http.StatusUnauthorized)
-				return
+				userId = -1 
+
+			case userId==-1 && r.Method != "POST":
+				log.Error("id user from cookie absent or invalid")
 			}
 
 			//если все успешно - пишем в контекст ID пользователя
-			log.Info("token validate", slog.String("user ID:", strconv.Itoa(userId)))
+			log.Info("token create or validate", slog.String("user ID:", strconv.Itoa(userId)))
 			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), CtxKeyUser, userId)))
 		}
 
