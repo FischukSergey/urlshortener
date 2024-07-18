@@ -173,6 +173,11 @@ func (s *Storage) GetAllUserURL(ctx context.Context, userID int) ([]getuserallur
 		log.Error("unable to execute query")
 		return getUserURLs, fmt.Errorf("unable to execute query: %w", err)
 	}
+	if result.Err()!=nil {
+				log.Error("unable to execute query")
+		return getUserURLs, fmt.Errorf("unable to execute query: %w", err)
+
+	} 
 	defer result.Close()
 
 	for result.Next() {
