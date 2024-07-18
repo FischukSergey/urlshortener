@@ -34,7 +34,7 @@ var log = slog.New(
 
 // GetStorageURL(alias string) метод получения записи из хранилища
 // возвращает URL и True для успешного поиска (string, bool)
-func (ds *DataStore) GetStorageURL(ctx context.Context, alias string) (string, bool) {
+func (ds *DataStore) GetStorageURL(_ context.Context, alias string) (string, bool) {
 	ds.mx.RLock()
 	defer ds.mx.RUnlock()
 	val, ok := ds.URLStorage[alias]

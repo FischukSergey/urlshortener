@@ -74,7 +74,7 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 
 		alias = utilitys.NewRandomString(config.AliasLength) //поправить
 
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 		defer cancel()
 		if _, ok := storage.GetStorageURL(ctx, alias); ok {
 			log.Error("Can't add, alias already exist", slog.String("alias:", alias))
@@ -97,6 +97,7 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 		var res []string
 		if errors.Is(err, dbstorage.ErrURLExists) {
 			res = strings.Split(err.Error(), ":")
+			
 			w.WriteHeader(http.StatusConflict)
 			render.JSON(w, r, Response{
 				Result: config.FlagBaseURL + "/" + res[0],
@@ -108,6 +109,11 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 		}
 
 		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			render.JSON(w, r, Response{
+				Error: "can't save JSON",
+			})
+
 			log.Error("Can't save JSON", err)
 			return
 		}

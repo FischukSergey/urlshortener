@@ -88,7 +88,7 @@ func PostBatch(log *slog.Logger, storage BatchSaver) http.HandlerFunc {
 
 		if len(response) > 0 && len(saveURL) > 0 {
 
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 			defer cancel()
 
 			err = storage.SaveStorageURL(ctx, saveURL) //пишем слайс в БД
