@@ -12,6 +12,7 @@ import (
 
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/getuserallurl"
+	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -101,6 +102,8 @@ func (s *Storage) GetStorageURL(ctx context.Context, alias string) (string, bool
 // SaveStorage() метод сохранения alias в BD
 func (s *Storage) SaveStorageURL(ctx context.Context, saveURL []config.SaveShortURL) error {
 	const op = "dbstorage.SaveStorageURL"
+
+	id := ctx.Value(auth.CtxKeyUser).(int)
 	//начинаем транзакцию записи в БД
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -110,7 +113,7 @@ func (s *Storage) SaveStorageURL(ctx context.Context, saveURL []config.SaveShort
 
 	//готовим запрос на вставку
 	stmt, err := tx.PrepareContext(ctx,
-		"INSERT INTO urlshort (alias,url) VALUES($1,$2);")
+		"INSERT INTO urlshort (alias,url,userid) VALUES($1,$2,$3);")
 	if err != nil {
 		return fmt.Errorf("%s: не удалось подготовить транзакцию записи в базу %w", op, err)
 	}
@@ -119,7 +122,7 @@ func (s *Storage) SaveStorageURL(ctx context.Context, saveURL []config.SaveShort
 	//пишем слайс urlов в базу данных
 	for _, ss := range saveURL {
 
-		_, err := stmt.ExecContext(ctx, ss.ShortURL, ss.OriginalURL)
+		_, err := stmt.ExecContext(ctx, ss.ShortURL, ss.OriginalURL, id)
 		//обработка ошибки вставки url
 		if err != nil {
 			//если url неуникальный
@@ -143,12 +146,41 @@ func (s *Storage) Close() {
 	s.db.Close()
 }
 
+// GetAllUserURL осуществляет выборку всех записей, сделанных пользователем ID
+// Принимает ID пользователя, возвращает слайс сокращенных и оригинальных URL
 func (s *Storage) GetAllUserURL(ctx context.Context, userID int) ([]getuserallurl.AllURLUserID, error) {
 	const op = "dbstorage.GetAllUserURL"
 	log = log.With(slog.String("method from", op))
 
-	var getUserURL []getuserallurl.AllURLUserID
+	var getUserURLs []getuserallurl.AllURLUserID
+
+	stmt, err := s.db.PrepareContext(ctx, "SELECT alias,url FROM urlshort WHERE userid=$1")
+	if err != nil {
+		log.Error("unable to prepare query")
+		return getUserURLs, fmt.Errorf("unable to prepare query: %w", err)
+	}
+	defer stmt.Close()
+
+	result, err := stmt.QueryContext(ctx, userID)
+	if errors.Is(err, sql.ErrNoRows) {
+		log.Error("row not found")
+		return getUserURLs, fmt.Errorf("row for userid %d not found: %w", userID, err)
+	}
+	if err != nil {
+		log.Error("unable to execute query")
+		return getUserURLs, fmt.Errorf("unable to execute query: %w", err)
+	}
+
+	for result.Next() {
+		var res getuserallurl.AllURLUserID
+		err = result.Scan(&res.ShortURL, &res.OriginalURL)
+		if err != nil {
+			log.Error("unable to read row query")
+			return getUserURLs, fmt.Errorf("unable to read row query: %w", err)
+		}
+		getUserURLs = append(getUserURLs, res)
+	}
 
 	//TODO: логика запроса
-	return getUserURL, nil
+	return getUserURLs, nil
 }

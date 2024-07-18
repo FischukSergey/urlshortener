@@ -28,6 +28,7 @@ func GetUserAllURL(log *slog.Logger, storage AllURLGetter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		log.Debug("Handler: GetUserAllURL")
+		w.Header().Set("Content-Type", "application/json")
 
 		id := r.Context().Value(auth.CtxKeyUser).(int)
 
@@ -56,12 +57,12 @@ func GetUserAllURL(log *slog.Logger, storage AllURLGetter) http.HandlerFunc {
 		for i, resp := range result { //готовим нужный формат для ответа
 			result[i] = AllURLUserID{
 				ShortURL: config.FlagBaseURL + "/" + resp.ShortURL,
+				OriginalURL: resp.OriginalURL,
 			}
 		}
 		render.JSON(w, r, result) //отправляем json ответ
 
 		log.Info("GET all URL for ID user success", slog.String("user ID:", strconv.Itoa(id)))
 		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/json")
 	}
 }

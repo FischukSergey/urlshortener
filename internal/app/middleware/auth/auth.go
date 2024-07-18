@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -29,7 +30,7 @@ type Claims struct {
 // BuildJWTString создаёт токен и возвращает его в виде строки.
 func BuildJWTString() (string, int, error) {
 
-	id := 5 //TODO: сделать генерацию ID
+	id := utilitys.NewRandomID(5) //TODO: сделать генерацию ID
 
 	// создаём новый токен с алгоритмом подписи HS256 и утверждениями — Claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
@@ -93,7 +94,7 @@ func NewMwToken(log *slog.Logger) func(next http.Handler) http.Handler {
 					log.Error("can`t create signed token", err)
 					return
 				}
-
+fmt.Println(valueCookie)
 				http.SetCookie(w, &http.Cookie{ //пишем подписанную куки в ответ запросу
 					Name:  "session_token",
 					Value: valueCookie,
