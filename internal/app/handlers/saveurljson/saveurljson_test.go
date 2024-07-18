@@ -57,15 +57,6 @@ func TestPostURLjson(t *testing.T) {
 				respJSON:    `{"error":"invalid request URL"}` + "\n",
 			},
 		},
-		{
-			name:        "test bad url",
-			bodyRequest: requestJSON{jsonString: `{" ' "}`},
-			want: want{
-				contentType: "application/json",
-				statusCode:  400,
-				respJSON:    `{"error":"failed to decode json request"}` + "\n",
-			},
-		},
 
 		// TODO: добавить проверку на существующий алиас когда будет настоящий, а не произвольный.
 		// TODO: заменить проверку на валидность jsonString

@@ -1,29 +1,32 @@
 package saveurl
 
 import (
+	"context"
+	"errors"
 	"io"
 	"log/slog"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
 	"github.com/FischukSergey/urlshortener.git/config"
+	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
+	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
+	"github.com/go-chi/chi/middleware"
 )
 
 type URLSaver interface {
-	SaveStorageURL(alias, URL string) error
-	GetStorageURL(alias string) (string, bool)
+	SaveStorageURL(ctx context.Context, saveURL []config.SaveShortURL) error
+	GetStorageURL(ctx context.Context, alias string) (string, bool)
 }
-
-const aliasLength = 8 //для генератора случайного алиаса
 
 // PostURL хендлер добавления (POST) сокращенного URL
 func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		log.Debug("Handler: PostURL")
+		var saveURL []config.SaveShortURL
 		var alias, newPath string // 	инициализируем пустой алиас
 		var msg []string
 
@@ -44,41 +47,52 @@ func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 			return
 		}
 
-		alias = NewRandomString(aliasLength) //генерируем произвольный алиас длины {aliasLength}
+		alias = utilitys.NewRandomString(config.AliasLength) //генерируем произвольный алиас длины {aliasLength}
 
-		if _, ok := storage.GetStorageURL(alias); ok {
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		defer cancel()
+		if _, ok := storage.GetStorageURL(ctx, alias); ok {
 			http.Error(w, "alias already exist", http.StatusConflict)
 			log.Error("Can't add, alias already exist", slog.String("alias:", alias))
 			return
 		}
 
-		_ = storage.SaveStorageURL(alias, string(body))
+		saveURL = append(saveURL, config.SaveShortURL{
+			ShortURL:    alias,
+			OriginalURL: string(body),
+		})
 
+		err = storage.SaveStorageURL(ctx, saveURL)
+		//обработка ошибки вставки уже существующего url
+		var res []string
+		if errors.Is(err, dbstorage.ErrURLExists) {
+			res = strings.Split(err.Error(), ":")
+			w.WriteHeader(http.StatusConflict)
+			w.Header().Set("Content-Type", "text/plain")
+			w.Write([]byte(config.FlagBaseURL + "/" + res[0]))
+			log.Error("Request POST failed, url exists",
+				slog.String("url", saveURL[0].OriginalURL),
+			)
+			return
+		}
+
+		if err != nil {
+			http.Error(w, "Error write DB", http.StatusInternalServerError)
+			log.Error("Error write DB", err)
+			return
+		}
+
+		//если ошибок нет, формируем ответ
 		msg = append(msg, config.FlagBaseURL)
 		msg = append(msg, alias)
 		newPath = strings.Join(msg, "/")
 
-		// fmt.Println(UrlStorage) //отладка убрать
-
 		w.WriteHeader(http.StatusCreated)
 		w.Header().Set("Content-Type", "text/plain")
 		w.Write([]byte(newPath))
-		log.Info("Request POST successful", slog.String("alias:", alias))
+		log.Info("Request POST successful",
+			slog.String("alias", alias),
+			slog.String("IDrequest", middleware.GetReqID(r.Context())),
+		)
 	}
-}
-
-// NewRandomString generates random string with given size.
-func NewRandomString(size int) string {
-	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	chars := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-		"abcdefghijklmnopqrstuvwxyz" +
-		"0123456789")
-
-	b := make([]rune, size)
-	for i := range b {
-		b[i] = chars[rnd.Intn(len(chars))]
-	}
-
-	return string(b)
 }

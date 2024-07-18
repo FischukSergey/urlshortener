@@ -1,6 +1,7 @@
 package saveurljson
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -8,15 +9,17 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/FischukSergey/urlshortener.git/config"
-	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurl"
+	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
+	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
 	"github.com/go-chi/render"
 )
 
 type URLSaverJSON interface {
-	SaveStorageURL(alias, URL string) error
-	GetStorageURL(alias string) (string, bool)
+	SaveStorageURL(ctx context.Context, saveURL []config.SaveShortURL) error
+	GetStorageURL(ctx context.Context, alias string) (string, bool)
 }
 
 type Request struct {
@@ -34,6 +37,7 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		log.Debug("Handler: PostURLjson")
+		var saveURL []config.SaveShortURL
 		var alias, newPath string
 		var msg []string
 		var req Request
@@ -68,8 +72,11 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 			return
 		}
 
-		alias = saveurl.NewRandomString(8) //поправить
-		if _, ok := storage.GetStorageURL(alias); ok {
+		alias = utilitys.NewRandomString(config.AliasLength) //поправить
+
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		defer cancel()
+		if _, ok := storage.GetStorageURL(ctx, alias); ok {
 			log.Error("Can't add, alias already exist", slog.String("alias:", alias))
 
 			w.WriteHeader(http.StatusConflict)
@@ -79,9 +86,36 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 			return
 		}
 
-		err = storage.SaveStorageURL(alias, req.URL)
+		saveURL = append(saveURL, config.SaveShortURL{
+			ShortURL:    alias,
+			OriginalURL: req.URL,
+		})
+
+		err = storage.SaveStorageURL(ctx, saveURL)
+
+		//обработка ошибки вставки уже существующего url
+		var res []string
+		if errors.Is(err, dbstorage.ErrURLExists) {
+			res = strings.Split(err.Error(), ":")
+			
+			w.WriteHeader(http.StatusConflict)
+			render.JSON(w, r, Response{
+				Result: config.FlagBaseURL + "/" + res[0],
+			})
+			log.Error("Request POST /api/shorten failed, url exists",
+				slog.String("url", saveURL[0].OriginalURL),
+			)
+			return
+		}
+
 		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			render.JSON(w, r, Response{
+				Error: "can't save JSON",
+			})
+
 			log.Error("Can't save JSON", err)
+			return
 		}
 
 		msg = append(msg, config.FlagBaseURL)
@@ -98,10 +132,6 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 			log.Error("Can't make JSON", err)
 		}
 		w.Write(resp)
-
-		// render.JSON(w, r, Response{
-		// 	Result: newPath,
-		// })
 
 		log.Info("Request POST json successful", slog.String("json:", string(resp)))
 	}
