@@ -154,6 +154,13 @@ func (s *Storage) GetAllUserURL(ctx context.Context, userID int) ([]getuserallur
 
 	var getUserURLs []getuserallurl.AllURLUserID
 
+	//начинаем транзакцию выборки из БД
+	tx, err := s.db.Begin()
+	if err != nil {
+		return getUserURLs, fmt.Errorf("%s: не удалось начать транзакцию записи в базу %w", op, err)
+	}
+	defer tx.Rollback()
+
 	stmt, err := s.db.PrepareContext(ctx, "SELECT alias,url FROM urlshort WHERE userid=$1")
 	if err != nil {
 		log.Error("unable to prepare query")
@@ -177,6 +184,6 @@ func (s *Storage) GetAllUserURL(ctx context.Context, userID int) ([]getuserallur
 		getUserURLs = append(getUserURLs, res)
 	}
 
-	//TODO: логика запроса
+	tx.Commit()//завершаем транзакцию
 	return getUserURLs, nil
 }
