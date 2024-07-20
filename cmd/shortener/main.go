@@ -50,13 +50,6 @@ func main() {
 			stdLOG.Fatal("Ошибка парсинга строки инициализации БД Postgres")
 		}
 
-		// var dbConfig = config.DBConfig{
-		// 	User:     "postgres",
-		// 	Password: "postgres", //TODO заменить на переменную окружения
-		// 	Host:     "localhost",
-		// 	Port:     "5432",
-		// 	Database: "urlshortdb",
-		// }
 		storage, err := dbstorage.NewDB(DatabaseDSN)
 		if err != nil {
 			fmt.Println(err)

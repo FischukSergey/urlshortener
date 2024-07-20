@@ -161,7 +161,7 @@ func (s *Storage) GetAllUserURL(ctx context.Context, userID int) ([]getuserallur
 	}
 	defer tx.Rollback()
 
-	stmt, err := s.db.PrepareContext(ctx, "SELECT alias,url FROM urlshort WHERE userid=$1")
+	stmt, err := tx.PrepareContext(ctx, "SELECT alias,url FROM urlshort WHERE userid=$1")
 	if err != nil {
 		log.Error("unable to prepare query")
 		return getUserURLs, fmt.Errorf("unable to prepare query: %w", err)
