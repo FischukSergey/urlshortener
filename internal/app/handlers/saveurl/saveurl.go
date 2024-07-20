@@ -13,7 +13,7 @@ import (
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
-	"github.com/go-chi/chi/middleware"
+	//"github.com/go-chi/chi/middleware"
 )
 
 type URLSaver interface {
@@ -92,7 +92,7 @@ func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 		w.Write([]byte(newPath))
 		log.Info("Request POST successful",
 			slog.String("alias", alias),
-			slog.String("IDrequest", middleware.GetReqID(r.Context())),
+			//slog.String("IDrequest", middleware.GetReqID(r.Context())),
 		)
 	}
 }

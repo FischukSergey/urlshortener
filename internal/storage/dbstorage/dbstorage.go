@@ -78,13 +78,11 @@ func (s *Storage) GetPingDB() error {
 func (s *Storage) GetStorageURL(ctx context.Context, alias string) (string, bool) {
 	const where = "dbstorage.GetStorageURL"
 	log = log.With(slog.String("method from", where))
-
+	
 	query := "SELECT url FROM urlshort WHERE alias=$1;"
 
 	var resURL string
-fmt.Println(alias)
 	err := s.db.QueryRow(ctx, query, alias).Scan(&resURL)
-	fmt.Println(err)
 	if errors.Is(err, pgx.ErrNoRows) {
 		log.Error("row not found")
 		return "", false
@@ -93,6 +91,7 @@ fmt.Println(alias)
 		log.Error("unable to execute query")
 		return "", false
 	}
+
 	return resURL, true
 }
 
@@ -102,27 +101,20 @@ func (s *Storage) SaveStorageURL(ctx context.Context, saveURL []config.SaveShort
 
 	id := ctx.Value(auth.CtxKeyUser).(int)
 
-	//начинаем транзакцию записи в БД
-	tx, err := s.db.Begin(ctx)
-	if err != nil {
-		return fmt.Errorf("%s: не удалось начать транзакцию записи в базу %w", op, err)
-	}
-	defer tx.Rollback(ctx)
-
 	//готовим запрос на вставку
 	query:=`INSERT INTO urlshort (alias,url,userid) VALUES($1,$2,$3);`
 
 	//пишем слайс urlов в базу данных
 	for _, ss := range saveURL {
 
-		_, err := tx.Exec(ctx, query, ss.ShortURL, ss.OriginalURL, id)
+		_, err := s.db.Exec(ctx, query, ss.ShortURL, ss.OriginalURL, id)
 		//обработка ошибки вставки url
 		if err != nil {
 			//если url неуникальный
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
 				var shorturl string
-				err = tx.QueryRow(ctx, "SELECT alias FROM urlshort WHERE url=$1", ss.OriginalURL).Scan(&shorturl)
+				err = s.db.QueryRow(ctx, "SELECT alias FROM urlshort WHERE url=$1", ss.OriginalURL).Scan(&shorturl)
 				if errors.Is(err, sql.ErrNoRows) {
 					log.Error("url not found")
 					return fmt.Errorf("%s: %w", op, ErrURLExists)
@@ -132,7 +124,7 @@ func (s *Storage) SaveStorageURL(ctx context.Context, saveURL []config.SaveShort
 			return fmt.Errorf("%s: не удалось выполнить транзакцию записи в базу %w", op, err)
 		}
 	}
-	return tx.Commit(ctx)
+	return nil 
 }
 
 func (s *Storage) Close() {
@@ -147,16 +139,9 @@ func (s *Storage) GetAllUserURL(ctx context.Context, userID int) ([]getuserallur
 
 	var getUserURLs []getuserallurl.AllURLUserID
 
-	//начинаем транзакцию выборки из БД
-	tx, err := s.db.Begin(ctx)
-	if err != nil {
-		return getUserURLs, fmt.Errorf("%s: не удалось начать транзакцию записи в базу %w", op, err)
-	}
-	defer tx.Rollback(ctx)
-
 	query:=`SELECT alias,url FROM urlshort WHERE userid=$1`
 
-	result, err := tx.Query(ctx,query, userID)
+	result, err := s.db.Query(ctx,query, userID)
 	if err != nil {
 		log.Error("unable to execute query")
 		return getUserURLs, fmt.Errorf("unable to execute query: %w", err)
@@ -178,6 +163,5 @@ func (s *Storage) GetAllUserURL(ctx context.Context, userID int) ([]getuserallur
 		getUserURLs = append(getUserURLs, res)
 	}
 
-	tx.Commit(ctx) //завершаем транзакцию
 	return getUserURLs, nil
 }
