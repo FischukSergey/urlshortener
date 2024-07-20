@@ -74,7 +74,7 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 
 		alias = utilitys.NewRandomString(config.AliasLength) //поправить
 
-		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 		defer cancel()
 		if _, ok := storage.GetStorageURL(ctx, alias); ok {
 			log.Error("Can't add, alias already exist", slog.String("alias:", alias))
