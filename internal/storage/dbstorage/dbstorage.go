@@ -46,9 +46,10 @@ func NewDB(dbConfig *pgconn.Config) (*Storage, error) {
 	query := `
 	CREATE TABLE IF NOT EXISTS urlshort
 	  (id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    alias varchar NOT NULL UNIQUE,
-    url varchar NOT NULL,
-		userid integer);
+    alias VARCHAR NOT NULL UNIQUE,
+    url VARCHAR NOT NULL,
+		userid INTEGER DEFAULT 0,
+		deletedflag BOOLEAN DEFAULT FALSE);
 	`
 	_, err = db.Exec(ctx, query)
 	if err != nil {
@@ -78,11 +79,12 @@ func (s *Storage) GetPingDB() error {
 func (s *Storage) GetStorageURL(ctx context.Context, alias string) (string, bool) {
 	const where = "dbstorage.GetStorageURL"
 	log = log.With(slog.String("method from", where))
-	
-	query := "SELECT url FROM urlshort WHERE alias=$1;"
+
+	query := "SELECT url, deletedflag FROM urlshort WHERE alias=$1;"
 
 	var resURL string
-	err := s.db.QueryRow(ctx, query, alias).Scan(&resURL)
+	var resDeleted bool
+	err := s.db.QueryRow(ctx, query, alias).Scan(&resURL, &resDeleted)
 	if errors.Is(err, pgx.ErrNoRows) {
 		log.Error("row not found")
 		return "", false
@@ -90,6 +92,9 @@ func (s *Storage) GetStorageURL(ctx context.Context, alias string) (string, bool
 	if err != nil {
 		log.Error("unable to execute query")
 		return "", false
+	}
+	if resDeleted { //если алиас есть, но помечен на удаление
+		return resURL, false
 	}
 
 	return resURL, true
@@ -102,7 +107,7 @@ func (s *Storage) SaveStorageURL(ctx context.Context, saveURL []config.SaveShort
 	id := ctx.Value(auth.CtxKeyUser).(int)
 
 	//готовим запрос на вставку
-	query:=`INSERT INTO urlshort (alias,url,userid) VALUES($1,$2,$3);`
+	query := `INSERT INTO urlshort (alias,url,userid) VALUES($1,$2,$3);`
 
 	//пишем слайс urlов в базу данных
 	for _, ss := range saveURL {
@@ -124,7 +129,7 @@ func (s *Storage) SaveStorageURL(ctx context.Context, saveURL []config.SaveShort
 			return fmt.Errorf("%s: не удалось выполнить транзакцию записи в базу %w", op, err)
 		}
 	}
-	return nil 
+	return nil
 }
 
 func (s *Storage) Close() {
@@ -139,9 +144,9 @@ func (s *Storage) GetAllUserURL(ctx context.Context, userID int) ([]getuserallur
 
 	var getUserURLs []getuserallurl.AllURLUserID
 
-	query:=`SELECT alias,url FROM urlshort WHERE userid=$1`
+	query := `SELECT alias,url FROM urlshort WHERE userid=$1`
 
-	result, err := s.db.Query(ctx,query, userID)
+	result, err := s.db.Query(ctx, query, userID)
 	if err != nil {
 		log.Error("unable to execute query")
 		return getUserURLs, fmt.Errorf("unable to execute query: %w", err)
@@ -157,11 +162,41 @@ func (s *Storage) GetAllUserURL(ctx context.Context, userID int) ([]getuserallur
 		var res getuserallurl.AllURLUserID
 		err = result.Scan(&res.ShortURL, &res.OriginalURL)
 		if err != nil {
-			log.Error("unable to read row query")
-			return getUserURLs, fmt.Errorf("unable to read row query: %w", err)
+			log.Error("unable to read row of query")
+			return getUserURLs, fmt.Errorf("unable to read row of query: %w", err)
 		}
 		getUserURLs = append(getUserURLs, res)
 	}
 
 	return getUserURLs, nil
+}
+
+// DeleteBatch метод удаления записей по списку сокращенных URl сделанных определенным пользователем
+func (s *Storage) DeleteBatch(ctx context.Context, aliases []string) error {
+	const op = "dbstorage.DeleteBatch"
+	log = log.With(slog.String("method from", op))
+
+	id := ctx.Value(auth.CtxKeyUser).(int) //получаем id пользователя
+
+	query := `UPDATE urlshort SET deletedflag=true WHERE alias=$1 AND userid=$2;`
+
+	batch := &pgx.Batch{} //формируем пакет запросов
+	for _, alias := range aliases {
+		batch.Queue(query, alias, id)
+	}
+	br := s.db.SendBatch(ctx, batch)
+
+	_, err := br.Exec()
+	if err != nil {
+		log.Error("unable to execute update batch of query")
+		return fmt.Errorf("unable to execute update batch of query: %w", err)
+	}
+
+	err = br.Close() //в этот момент происходит обновление
+	if err != nil {
+		log.Error("unable to close  batch of query")
+		return fmt.Errorf("unable to close  batch of query: %w", err)
+	}
+
+	return nil
 }

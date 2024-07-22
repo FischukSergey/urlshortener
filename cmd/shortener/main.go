@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	stdLOG "log"
+	stdLog "log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -10,6 +10,7 @@ import (
 
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/batch"
+	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/deletedflag"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/getpingdb"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/geturl"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/getuserallurl"
@@ -47,7 +48,7 @@ func main() {
 		var DatabaseDSN *pgconn.Config
 		DatabaseDSN, err := pgconn.ParseConfig(config.FlagDatabaseDSN)
 		if err != nil {
-			stdLOG.Fatal("Ошибка парсинга строки инициализации БД Postgres")
+			stdLog.Fatal("Ошибка парсинга строки инициализации БД Postgres")
 		}
 
 		storage, err := dbstorage.NewDB(DatabaseDSN)
@@ -65,6 +66,7 @@ func main() {
 		r.Post("/", saveurl.PostURL(log, storage))
 		r.Post("/api/shorten", saveurljson.PostURLjson(log, storage))
 		r.Post("/api/shorten/batch", batch.PostBatch(log, storage))
+		r.Delete("/api/user/urls", deletedflag.DeleteShortURL(log, storage))
 
 	case config.FlagFileStoragePath != "": //работаем с json файлом если нет DB
 
