@@ -11,9 +11,13 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/storage/jsonstorage"
 )
 
+type URLWithUserID struct{
+	OriginalURL string
+	UserID int
+}
 type DataStore struct {
 	mx         sync.RWMutex
-	URLStorage map[string]string
+	URLStorage map[string]URLWithUserID
 }
 
 // NewMap() инициализация мапы с двумя примерами хранения URL для тестов

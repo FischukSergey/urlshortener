@@ -26,6 +26,7 @@ type DBConfig struct {
 type SaveShortURL struct { //структура для записи сокращенных urlов в хранилища
 	ShortURL    string
 	OriginalURL string
+	UserID      int
 }
 
 func ParseFlags() {

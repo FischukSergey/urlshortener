@@ -12,7 +12,6 @@ import (
 
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/getuserallurl"
-	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -33,9 +32,8 @@ var log = slog.New(
 
 type DeletedRequest struct {
 	ShortURL string
-	UserID int
+	UserID   int
 }
-
 
 // NewDB() создаем объект базы данных postgres
 func NewDB(dbConfig *pgconn.Config) (*Storage, error) {
@@ -79,32 +77,32 @@ func NewDB(dbConfig *pgconn.Config) (*Storage, error) {
 
 // flushMessages постоянно отправляет несколько сообщений в хранилище с определённым интервалом
 func (s *Storage) flushDeletes() {
- // будем отправлять сообщения, накопленные за последние 10 секунд
- ticker := time.NewTicker(10 * time.Second)
+	// будем отправлять сообщения, накопленные за последние 10 секунд
+	ticker := time.NewTicker(10 * time.Second)
 
- var delmsges []DeletedRequest 
+	var delmsges []DeletedRequest
 
- for {
-  select {
-  case msg := <-s.DelChan:
-   // добавим сообщение в слайс для последующей отправки на удаление
-   delmsges = append(delmsges, msg)
-  case <-ticker.C:
-   // подождём, пока придёт хотя бы одно сообщение
-   if len(delmsges) == 0 {
-    continue
-   }
-   //отправим на удаление все пришедшие сообщения одновременно
-   err := s.DeleteBatch(context.TODO(), delmsges...)
-   if err != nil {
-    log.Debug("cannot save messages", err)
-    // не будем стирать сообщения, попробуем отправить их чуть позже
-    continue
-   }
-   // сотрём успешно отосланные сообщения
-   delmsges = nil
-  }
- }
+	for {
+		select {
+		case msg := <-s.DelChan:
+			// добавим сообщение в слайс для последующей отправки на удаление
+			delmsges = append(delmsges, msg)
+		case <-ticker.C:
+			// подождём, пока придёт хотя бы одно сообщение
+			if len(delmsges) == 0 {
+				continue
+			}
+			//отправим на удаление все пришедшие сообщения одновременно
+			err := s.DeleteBatch(context.TODO(), delmsges...)
+			if err != nil {
+				log.Debug("cannot save messages", err)
+				// не будем стирать сообщения, попробуем отправить их чуть позже
+				continue
+			}
+			// сотрём успешно отосланные сообщения
+			delmsges = nil
+		}
+	}
 }
 
 // GetPingDB() метод проверки соединения с базой
@@ -148,15 +146,13 @@ func (s *Storage) GetStorageURL(ctx context.Context, alias string) (string, bool
 func (s *Storage) SaveStorageURL(ctx context.Context, saveURL []config.SaveShortURL) error {
 	const op = "dbstorage.SaveStorageURL"
 
-	id := ctx.Value(auth.CtxKeyUser).(int)
-
 	//готовим запрос на вставку
 	query := `INSERT INTO urlshort (alias,url,userid) VALUES($1,$2,$3);`
 
 	//пишем слайс urlов в базу данных
 	for _, ss := range saveURL {
 
-		_, err := s.DB.Exec(ctx, query, ss.ShortURL, ss.OriginalURL, id)
+		_, err := s.DB.Exec(ctx, query, ss.ShortURL, ss.OriginalURL, ss.UserID)
 		//обработка ошибки вставки url
 		if err != nil {
 			//если url неуникальный
@@ -211,7 +207,9 @@ func (s *Storage) GetAllUserURL(ctx context.Context, userID int) ([]getuserallur
 		}
 		getUserURLs = append(getUserURLs, res)
 	}
-
+	if err := result.Err(); err != nil {
+		return nil, err
+	}
 	return getUserURLs, nil
 }
 
@@ -223,7 +221,7 @@ func (s *Storage) DeleteBatch(ctx context.Context, delmsges ...DeletedRequest) e
 	query := `UPDATE urlshort SET deletedflag=true WHERE alias=$1 AND userid=$2;`
 
 	batch := &pgx.Batch{} //формируем пакет запросов
-	
+
 	for _, delmsg := range delmsges {
 		batch.Queue(query, delmsg.ShortURL, delmsg.UserID)
 	}

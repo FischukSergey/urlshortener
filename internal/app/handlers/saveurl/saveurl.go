@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/FischukSergey/urlshortener.git/config"
+	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
 	//"github.com/go-chi/chi/middleware"
@@ -24,6 +25,8 @@ type URLSaver interface {
 // PostURL хендлер добавления (POST) сокращенного URL
 func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		userID := r.Context().Value(auth.CtxKeyUser).(int)
 
 		log.Debug("Handler: PostURL")
 		var saveURL []config.SaveShortURL
@@ -60,6 +63,7 @@ func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 		saveURL = append(saveURL, config.SaveShortURL{
 			ShortURL:    alias,
 			OriginalURL: string(body),
+			UserID: userID,
 		})
 
 		err = storage.SaveStorageURL(ctx, saveURL)
