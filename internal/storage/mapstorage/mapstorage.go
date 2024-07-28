@@ -11,22 +11,15 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/storage/jsonstorage"
 )
 
-type URLWithUserID struct{
-	OriginalURL string
-	UserID int
-}
 type DataStore struct {
 	mx         sync.RWMutex
-	URLStorage map[string]URLWithUserID
+	URLStorage map[string]config.URLWithUserID
 }
 
 // NewMap() инициализация мапы с двумя примерами хранения URL для тестов
 func NewMap() *DataStore {
 	return &DataStore{
-		URLStorage: map[string]string{
-			// "practicum": "https://practicum.yandex.ru/",
-			// "map":       "https://golangify.com/map",
-		},
+		URLStorage: map[string]config.URLWithUserID{},
 	}
 }
 
@@ -42,7 +35,7 @@ func (ds *DataStore) GetStorageURL(_ context.Context, alias string) (string, boo
 	ds.mx.RLock()
 	defer ds.mx.RUnlock()
 	val, ok := ds.URLStorage[alias]
-	return val, ok
+	return val.OriginalURL, ok
 }
 
 // SaveStorageURL(alias, URL string) метод записи в хранилище
@@ -52,7 +45,10 @@ func (ds *DataStore) SaveStorageURL(ctx context.Context, saveURL []config.SaveSh
 	defer ds.mx.Unlock()
 	for _, s := range saveURL {
 		// пишем в мапу
-		ds.URLStorage[s.ShortURL] = s.OriginalURL
+		ds.URLStorage[s.ShortURL] = config.URLWithUserID{
+			OriginalURL: s.OriginalURL,
+			UserID:      s.UserID,
+		}
 	}
 
 	if config.FlagFileStoragePath != "" { //открываем файл для записи
@@ -63,7 +59,7 @@ func (ds *DataStore) SaveStorageURL(ctx context.Context, saveURL []config.SaveSh
 		defer jsonDB.Close()
 		for _, s := range saveURL {
 			//пишем в текстовый файл json строку
-			if err = jsonDB.Write(s.ShortURL, s.OriginalURL); err != nil {
+			if err = jsonDB.Write(s); err != nil {
 				log.Error("Error writing to the file 'short-url-db.json'", err)
 			}
 		}
@@ -79,7 +75,7 @@ func (ds *DataStore) GetAll() map[string]string {
 
 	mapCopy := make(map[string]string, len(ds.URLStorage))
 	for key, val := range ds.URLStorage {
-		mapCopy[key] = val
+		mapCopy[key] = val.OriginalURL
 	}
 
 	return mapCopy

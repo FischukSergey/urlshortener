@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
+
+	"github.com/FischukSergey/urlshortener.git/config"
 )
 
 type JSONRaw struct {
@@ -31,11 +34,11 @@ func NewJSONFileWriter(fileName string) (*JSONFileWriter, error) {
 }
 
 // Write() метод для записи новой json строки в файл
-func (fs *JSONFileWriter) Write(alias, urlOriginal string) error {
+func (fs *JSONFileWriter) Write(s config.SaveShortURL) error {
 	raw := JSONRaw{
-		ShortURL:    alias,
-		OriginalURL: urlOriginal,
-		UUID:        "1", //TODO заменить на реальный ID
+		ShortURL:    s.ShortURL,
+		OriginalURL: s.OriginalURL,
+		UUID:        strconv.Itoa(s.UserID),
 	}
 
 	return fs.JSONWriter.Encode(raw)
@@ -63,8 +66,8 @@ func NewJSONFileReader(filename string) (*JSONFileReader, error) {
 	}, nil
 }
 
-//Метод ReadToMap() принимает мапу(пустую) и заполняет ее данными из json файла
-func (fr *JSONFileReader) ReadToMap(mapURL map[string]string) error{ //(map[string]string, error) { //чтение файла в мапу до запуска сервера, поэтому работаем без mutex
+// Метод ReadToMap() принимает мапу(пустую) и заполняет ее данными из json файла
+func (fr *JSONFileReader) ReadToMap(mapURL map[string]config.URLWithUserID) error { //(map[string]string, error) { //чтение файла в мапу до запуска сервера, поэтому работаем без mutex
 	defer fr.file.Close()
 
 	for fr.ScanRaw.Scan() { //построчно читаем, декодируем и пишем в мапу
@@ -78,7 +81,14 @@ func (fr *JSONFileReader) ReadToMap(mapURL map[string]string) error{ //(map[stri
 		if _, ok := mapURL[mapLine.ShortURL]; ok {
 			fmt.Printf("Алиас %s дублируется:\n", mapLine.ShortURL)
 		} else {
-			mapURL[mapLine.ShortURL] = mapLine.OriginalURL
+			userID, err := strconv.Atoi(mapLine.UUID)
+			if err != nil { //если ID  не порядковый номер
+				userID = -1
+			}
+			mapURL[mapLine.ShortURL] = config.URLWithUserID{
+				OriginalURL: mapLine.OriginalURL,
+				UserID:      userID,
+			}
 		}
 	}
 	return nil //mapURL, nil

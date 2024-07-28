@@ -23,17 +23,14 @@ var ErrURLExists = errors.New("url exists")
 
 type Storage struct {
 	DB      *pgxpool.Pool
-	DelChan chan DeletedRequest //канал для записи отложенных запросов на удаление
+	DelChan chan config.DeletedRequest //канал для записи отложенных запросов на удаление
 }
 
 var log = slog.New(
 	slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 )
 
-type DeletedRequest struct {
-	ShortURL string
-	UserID   int
-}
+
 
 // NewDB() создаем объект базы данных postgres
 func NewDB(dbConfig *pgconn.Config) (*Storage, error) {
@@ -67,7 +64,7 @@ func NewDB(dbConfig *pgconn.Config) (*Storage, error) {
 
 	instance := &Storage{
 		DB:      db,
-		DelChan: make(chan DeletedRequest, 1024), //устанавливаем каналу буфер
+		DelChan: make(chan config.DeletedRequest, 1024), //устанавливаем каналу буфер
 	}
 
 	go instance.flushDeletes() //горутина фонового сохранения данных на удаление
@@ -80,7 +77,7 @@ func (s *Storage) flushDeletes() {
 	// будем отправлять сообщения, накопленные за последние 10 секунд
 	ticker := time.NewTicker(10 * time.Second)
 
-	var delmsges []DeletedRequest
+	var delmsges []config.DeletedRequest
 
 	for {
 		select {
@@ -214,7 +211,7 @@ func (s *Storage) GetAllUserURL(ctx context.Context, userID int) ([]getuserallur
 }
 
 // DeleteBatch метод удаления записей по списку сокращенных URl сделанных определенным пользователем
-func (s *Storage) DeleteBatch(ctx context.Context, delmsges ...DeletedRequest) error {
+func (s *Storage) DeleteBatch(ctx context.Context, delmsges ...config.DeletedRequest) error {
 	const op = "dbstorage.DeleteBatch"
 	log = log.With(slog.String("method from", op))
 

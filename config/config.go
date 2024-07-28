@@ -23,12 +23,20 @@ type DBConfig struct {
 	Database string // = "urlshortdb"
 }
 
-type SaveShortURL struct { //структура для записи сокращенных urlов в хранилища
+type SaveShortURL struct { //структура для записи сокращенных urlов в БД
 	ShortURL    string
 	OriginalURL string
 	UserID      int
 }
+type URLWithUserID struct{ //структура для записи в мапу
+	OriginalURL string
+	UserID int
+}
 
+type DeletedRequest struct { //структура для пакетного удаления записей
+	ShortURL string
+	UserID   int
+}
 func ParseFlags() {
 
 	defaultRunAddr := ipAddr + ":8080"
