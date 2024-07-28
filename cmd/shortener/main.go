@@ -88,13 +88,14 @@ func main() {
 		r.Post("/", saveurl.PostURL(log, mapURL))
 		r.Post("/api/shorten", saveurljson.PostURLjson(log, mapURL))
 		r.Post("/api/shorten/batch", batch.PostBatch(log, mapURL))
+		r.Delete("/api/user/urls", deletedflag.DeleteShortURL(log, mapURL.DelChan))
 
 	default: //работаем просто с мапой
 		r.Get("/{alias}", geturl.GetURL(log, mapURL))
 		r.Post("/", saveurl.PostURL(log, mapURL))
 		r.Post("/api/shorten", saveurljson.PostURLjson(log, mapURL))
 		r.Post("/api/shorten/batch", batch.PostBatch(log, mapURL))
-
+		r.Delete("/api/user/urls", deletedflag.DeleteShortURL(log, mapURL.DelChan))
 	}
 
 	//запускаем сервер

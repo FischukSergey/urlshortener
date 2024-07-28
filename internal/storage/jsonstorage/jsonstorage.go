@@ -22,6 +22,13 @@ type JSONFileWriter struct {
 	JSONWriter *json.Encoder
 }
 
+type JSONFileReWriter struct {
+	file       *os.File
+	JSONWriter *json.Encoder
+	//JSONReader *json.Decoder
+	//ScanRaw    *bufio.Scanner
+}
+
 // NewJSONFileWriter() создаем объект с открытым файлом для записи
 func NewJSONFileWriter(fileName string) (*JSONFileWriter, error) {
 	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
@@ -31,6 +38,20 @@ func NewJSONFileWriter(fileName string) (*JSONFileWriter, error) {
 	return &JSONFileWriter{
 		file:       file,
 		JSONWriter: json.NewEncoder(file),
+	}, nil
+}
+
+// NewJSONFileReWriter() создаем объект с открытым пустым файлом
+func NewJSONFileReWriter(fileName string) (*JSONFileReWriter, error) {
+	file, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_TRUNC|os.O_APPEND, 0666)
+	if err != nil {
+		return nil, err
+	}
+	return &JSONFileReWriter{
+		file:       file,
+		JSONWriter: json.NewEncoder(file),
+		//JSONReader: json.NewDecoder(file),
+		//ScanRaw:    bufio.NewScanner(file),
 	}, nil
 }
 
@@ -81,24 +102,42 @@ func (fr *JSONFileReader) ReadToMap(mapURL map[string]config.URLWithUserID) erro
 		}
 		if _, ok := mapURL[mapLine.ShortURL]; ok {
 			fmt.Printf("Алиас %s дублируется:\n", mapLine.ShortURL)
-		} else {
-			userID, err := strconv.Atoi(mapLine.UUID)
-			if err != nil { //если ID  не порядковый номер
-				userID = -1
-			}
-			mapURL[mapLine.ShortURL] = config.URLWithUserID{
-				OriginalURL: mapLine.OriginalURL,
-				UserID:      userID,
-			}
+			continue
+		}
+		userID, err := strconv.Atoi(mapLine.UUID)
+		if err != nil { //если ID  не порядковый номер
+			userID = -1
+		}
+		mapURL[mapLine.ShortURL] = config.URLWithUserID{
+			OriginalURL: mapLine.OriginalURL,
+			UserID:      userID,
+			DeleteFlag:  mapLine.DeleteFlag,
+		}
+
+	}
+	return nil //mapURL, nil
+}
+func (fr *JSONFileReader) Close() error {
+	return fr.file.Close()
+}
+
+func (rr *JSONFileReWriter) DeleteFlag(mapLines map[string]config.URLWithUserID) error {
+
+	for mapLine := range mapLines {
+		raw := JSONRaw{
+			ShortURL:    mapLine,
+			OriginalURL: mapLines[mapLine].OriginalURL,
+			UUID:        strconv.Itoa(mapLines[mapLine].UserID),
+			DeleteFlag:  mapLines[mapLine].DeleteFlag,
+		}
+		err := rr.JSONWriter.Encode(raw)
+		if err != nil {
+			return fmt.Errorf("no write json row with ShortURL: %s", mapLine)
 		}
 	}
 	return nil //mapURL, nil
 }
 
-func (fr *JSONFileReader) Close() error {
-	return fr.file.Close()
+func (rr *JSONFileReWriter) Close() error {
+	return rr.file.Close()
 }
-
-// {"uuid":"1","short_url":"4rSPg8ap","original_url":"http://yandex.ru"}
-// {"uuid":"2","short_url":"edVPg3ks","original_url":"http://ya.ru"}
-// {"uuid":"3","short_url":"dG56Hqxm","original_url":"http://practicum.yandex.ru"}

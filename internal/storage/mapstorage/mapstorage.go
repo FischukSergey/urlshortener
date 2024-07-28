@@ -72,11 +72,10 @@ func (ds *DataStore) GetStorageURL(_ context.Context, alias string) (string, boo
 	ds.mx.RLock()
 	defer ds.mx.RUnlock()
 	val, ok := ds.URLStorage[alias]
-	if ok {
-		if val.DeleteFlag {
-			return val.OriginalURL, false //если алиас есть, но помечен на удаление
-		}
+	if ok && val.DeleteFlag {
+		return val.OriginalURL, false //если алиас есть, но помечен на удаление
 	}
+
 	return val.OriginalURL, ok
 }
 
@@ -127,13 +126,27 @@ func (ds *DataStore) GetAll() map[string]string {
 func (ds *DataStore) DeleteBatch(ctx context.Context, delmsges ...config.DeletedRequest) error {
 	ds.mx.Lock() //блокируем мапу
 	defer ds.mx.Unlock()
-
+	count := 0 //счетчик удачных удалений
 	for _, delmsg := range delmsges {
 		val, ok := ds.URLStorage[delmsg.ShortURL]
-		if ok || val.UserID == delmsg.UserID { //переписываем флаг на признак 'удален'
+		if ok && val.UserID == delmsg.UserID { //переписываем флаг на признак 'удален'
 			ds.URLStorage[delmsg.ShortURL] = config.URLWithUserID{
+				OriginalURL: val.OriginalURL,
+				UserID: val.UserID,
 				DeleteFlag: true,
 			}
+			count++
+		}
+	}
+
+	if count > 0 && config.FlagFileStoragePath != "" { //открываем файл для перезаписи
+		jsonFile, err := jsonstorage.NewJSONFileReWriter(config.FlagFileStoragePath)
+		if err != nil {
+			return fmt.Errorf("%w. Error opening the file: %s ", err, config.FlagFileStoragePath)
+		}
+		defer jsonFile.Close()
+		if err = jsonFile.DeleteFlag(ds.URLStorage); err != nil {
+			fmt.Println(err)
 		}
 	}
 
