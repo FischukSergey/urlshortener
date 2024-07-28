@@ -14,6 +14,7 @@ type JSONRaw struct {
 	UUID        string `json:"uuid"`
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
+	DeleteFlag  bool   `json:"delete_flag"`
 }
 
 type JSONFileWriter struct {

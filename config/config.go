@@ -28,15 +28,17 @@ type SaveShortURL struct { //структура для записи сокращ
 	OriginalURL string
 	UserID      int
 }
-type URLWithUserID struct{ //структура для записи в мапу
+type URLWithUserID struct { //структура для записи в мапу
 	OriginalURL string
-	UserID int
+	UserID      int
+	DeleteFlag bool
 }
 
 type DeletedRequest struct { //структура для пакетного удаления записей
 	ShortURL string
 	UserID   int
 }
+
 func ParseFlags() {
 
 	defaultRunAddr := ipAddr + ":8080"
