@@ -36,7 +36,7 @@ func main() {
 	r := chi.NewRouter()             //инициализируем роутер и middleware
 	r.Use(mwlogger.NewMwLogger(log)) //маршрут в middleware за логированием
 	r.Use(gzipper.NewMwGzipper(log)) //работа со сжатыми запросами/сжатие ответов
-	r.Use(auth.NewMwToken(log))
+	r.Use(auth.NewMwToken(log))      //ID session аутентификация пользователя/JWToken в  cookie
 	r.Use(middleware.RequestID)
 
 	var mapURL = mapstorage.NewMap() //инициализируем мапу
@@ -85,6 +85,7 @@ func main() {
 		}
 		// инициализируем обработчики
 		r.Get("/{alias}", geturl.GetURL(log, mapURL))
+		r.Get("/api/user/urls", getuserallurl.GetUserAllURL(log, mapURL))
 		r.Post("/", saveurl.PostURL(log, mapURL))
 		r.Post("/api/shorten", saveurljson.PostURLjson(log, mapURL))
 		r.Post("/api/shorten/batch", batch.PostBatch(log, mapURL))
@@ -92,6 +93,7 @@ func main() {
 
 	default: //работаем просто с мапой
 		r.Get("/{alias}", geturl.GetURL(log, mapURL))
+		r.Get("/api/user/urls", getuserallurl.GetUserAllURL(log, mapURL))
 		r.Post("/", saveurl.PostURL(log, mapURL))
 		r.Post("/api/shorten", saveurljson.PostURLjson(log, mapURL))
 		r.Post("/api/shorten/batch", batch.PostBatch(log, mapURL))

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/FischukSergey/urlshortener.git/config"
+	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/getuserallurl"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/jsonstorage"
 )
 
@@ -54,7 +55,7 @@ func (s *DataStore) flushDeletes() {
 			//отправим на удаление все пришедшие сообщения одновременно
 			err := s.DeleteBatch(context.TODO(), delmsges...)
 			if err != nil {
-				log.Debug("cannot save messages", err)
+				log.Debug("cannot delete messages", err)
 				// не будем стирать сообщения, попробуем отправить их чуть позже
 				continue
 			}
@@ -101,7 +102,7 @@ func (ds *DataStore) SaveStorageURL(ctx context.Context, saveURL []config.SaveSh
 		for _, s := range saveURL {
 			//пишем в текстовый файл json строку
 			if err = jsonDB.Write(s); err != nil {
-				log.Error("Error writing to the file 'short-url-db.json'", err)
+				log.Error("Error writing to the file 'short-url-db.json'", (err))
 			}
 		}
 	}
@@ -109,17 +110,25 @@ func (ds *DataStore) SaveStorageURL(ctx context.Context, saveURL []config.SaveSh
 	return nil
 }
 
-// GetAll() 	может пригодиться
-func (ds *DataStore) GetAll() map[string]string {
+// GetAllUserURL() получение всех записей пользователя
+func (ds *DataStore) GetAllUserURL(ctx context.Context, userID int) ([]getuserallurl.AllURLUserID, error) {
+	const op = "mapstorage.GetAllUserURL"
+	log = log.With(slog.String("method from", op))
 	ds.mx.RLock()
 	defer ds.mx.RUnlock()
 
-	mapCopy := make(map[string]string, len(ds.URLStorage))
-	for key, val := range ds.URLStorage {
-		mapCopy[key] = val.OriginalURL
-	}
+	var getUserURLs []getuserallurl.AllURLUserID
 
-	return mapCopy
+	for shortURL, userURL := range ds.URLStorage {
+		if userURL.UserID == userID && !userURL.DeleteFlag {
+			getUserURLs = append(getUserURLs, getuserallurl.AllURLUserID{
+				ShortURL:    shortURL,
+				OriginalURL: userURL.OriginalURL,
+			})
+		}
+	}
+	
+	return getUserURLs, nil
 }
 
 // DeleteBatch метод удаления записей по списку сокращенных URl сделанных определенным пользователем
@@ -132,8 +141,8 @@ func (ds *DataStore) DeleteBatch(ctx context.Context, delmsges ...config.Deleted
 		if ok && val.UserID == delmsg.UserID { //переписываем флаг на признак 'удален'
 			ds.URLStorage[delmsg.ShortURL] = config.URLWithUserID{
 				OriginalURL: val.OriginalURL,
-				UserID: val.UserID,
-				DeleteFlag: true,
+				UserID:      val.UserID,
+				DeleteFlag:  true,
 			}
 			count++
 		}

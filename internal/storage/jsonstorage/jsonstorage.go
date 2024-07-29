@@ -121,6 +121,7 @@ func (fr *JSONFileReader) Close() error {
 	return fr.file.Close()
 }
 
+//DeleteFlag метод помечает на удаление все запрошенные пользователем записи 
 func (rr *JSONFileReWriter) DeleteFlag(mapLines map[string]config.URLWithUserID) error {
 
 	for mapLine := range mapLines {
