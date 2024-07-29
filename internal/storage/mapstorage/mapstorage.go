@@ -36,7 +36,7 @@ func NewMap() *DataStore {
 }
 
 // flushMessages постоянно отправляет несколько сообщений в хранилище с определённым интервалом
-func (s *DataStore) flushDeletes() {
+func (ds *DataStore) flushDeletes() {
 	// будем отправлять сообщения, накопленные за последние 10 секунд
 	ticker := time.NewTicker(10 * time.Second)
 
@@ -44,7 +44,7 @@ func (s *DataStore) flushDeletes() {
 
 	for {
 		select {
-		case msg := <-s.DelChan:
+		case msg := <-ds.DelChan:
 			// добавим сообщение в слайс для последующей отправки на удаление
 			delmsges = append(delmsges, msg)
 		case <-ticker.C:
@@ -53,7 +53,7 @@ func (s *DataStore) flushDeletes() {
 				continue
 			}
 			//отправим на удаление все пришедшие сообщения одновременно
-			err := s.DeleteBatch(context.TODO(), delmsges...)
+			err := ds.DeleteBatch(context.TODO(), delmsges...)
 			if err != nil {
 				log.Debug("cannot delete messages", err)
 				// не будем стирать сообщения, попробуем отправить их чуть позже
