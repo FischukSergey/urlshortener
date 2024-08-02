@@ -23,20 +23,9 @@ type DBConfig struct {
 	Database string // = "urlshortdb"
 }
 
-type SaveShortURL struct { //структура для записи сокращенных urlов в БД
+type SaveShortURL struct { //структура для записи сокращенных urlов в хранилища
 	ShortURL    string
 	OriginalURL string
-	UserID      int
-}
-type URLWithUserID struct { //структура для записи в мапу
-	OriginalURL string
-	UserID      int
-	DeleteFlag bool
-}
-
-type DeletedRequest struct { //структура для пакетного удаления записей
-	ShortURL string
-	UserID   int
 }
 
 func ParseFlags() {

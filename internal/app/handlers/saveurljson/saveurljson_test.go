@@ -2,7 +2,6 @@ package saveurljson
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"log/slog"
 	"net/http"
@@ -10,8 +9,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/FischukSergey/urlshortener.git/config"
-	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/mapstorage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,7 +21,7 @@ func TestPostURLjson(t *testing.T) {
 		respJSON    string
 	}
 	type requestJSON struct {
-		jsonString string
+		jsonString string 
 	}
 
 	tests := []struct {
@@ -68,18 +65,12 @@ func TestPostURLjson(t *testing.T) {
 		slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 	)
 	var m = mapstorage.NewMap()
-	m.URLStorage["practicum"] = config.URLWithUserID{
-		OriginalURL: "https://practicum.yandex.ru/",
-	}
-	m.URLStorage["map"] = config.URLWithUserID{
-		OriginalURL: "https://golangify.com/map",
-	}
+	m.URLStorage["practicum"] = "https://practicum.yandex.ru/"
+	m.URLStorage["map"] = "https://golangify.com/map"
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			requestTest := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewReader([]byte(tt.bodyRequest.jsonString)))
-			request := requestTest.WithContext(context.WithValue(requestTest.Context(), auth.CtxKeyUser, 5))
-
+			request := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewReader([]byte(tt.bodyRequest.jsonString)))
 			request.Header.Set("Content-Type", "application/json")
 
 			w := httptest.NewRecorder()

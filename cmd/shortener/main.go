@@ -2,21 +2,18 @@ package main
 
 import (
 	"fmt"
-	stdLog "log"
 	"log/slog"
 	"net/http"
 	"os"
 	"time"
+	stdLOG "log"
 
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/batch"
-	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/deletedflag"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/getpingdb"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/geturl"
-	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/getuserallurl"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurl"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurljson"
-	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/gzipper"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/mwlogger"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
@@ -36,7 +33,6 @@ func main() {
 	r := chi.NewRouter()             //инициализируем роутер и middleware
 	r.Use(mwlogger.NewMwLogger(log)) //маршрут в middleware за логированием
 	r.Use(gzipper.NewMwGzipper(log)) //работа со сжатыми запросами/сжатие ответов
-	r.Use(auth.NewMwToken(log))      //ID session аутентификация пользователя/JWToken в  cookie
 	r.Use(middleware.RequestID)
 
 	var mapURL = mapstorage.NewMap() //инициализируем мапу
@@ -48,9 +44,16 @@ func main() {
 		var DatabaseDSN *pgconn.Config
 		DatabaseDSN, err := pgconn.ParseConfig(config.FlagDatabaseDSN)
 		if err != nil {
-			stdLog.Fatal("Ошибка парсинга строки инициализации БД Postgres")
+			stdLOG.Fatal("Ошибка парсинга строки инициализации БД Postgres")
 		}
 
+		// var dbConfig = config.DBConfig{
+		// 	User:     "postgres",
+		// 	Password: "postgres", //TODO заменить на переменную окружения
+		// 	Host:     "localhost",
+		// 	Port:     "5432",
+		// 	Database: "urlshortdb",
+		// }
 		storage, err := dbstorage.NewDB(DatabaseDSN)
 		if err != nil {
 			fmt.Println(err)
@@ -62,11 +65,9 @@ func main() {
 		// инициализируем обработчики
 		r.Get("/{alias}", geturl.GetURL(log, storage))
 		r.Get("/ping", getpingdb.GetPingDB(log, storage))
-		r.Get("/api/user/urls", getuserallurl.GetUserAllURL(log, storage))
 		r.Post("/", saveurl.PostURL(log, storage))
 		r.Post("/api/shorten", saveurljson.PostURLjson(log, storage))
 		r.Post("/api/shorten/batch", batch.PostBatch(log, storage))
-		r.Delete("/api/user/urls", deletedflag.DeleteShortURL(log, storage.DelChan))
 
 	case config.FlagFileStoragePath != "": //работаем с json файлом если нет DB
 
@@ -85,19 +86,16 @@ func main() {
 		}
 		// инициализируем обработчики
 		r.Get("/{alias}", geturl.GetURL(log, mapURL))
-		r.Get("/api/user/urls", getuserallurl.GetUserAllURL(log, mapURL))
 		r.Post("/", saveurl.PostURL(log, mapURL))
 		r.Post("/api/shorten", saveurljson.PostURLjson(log, mapURL))
 		r.Post("/api/shorten/batch", batch.PostBatch(log, mapURL))
-		r.Delete("/api/user/urls", deletedflag.DeleteShortURL(log, mapURL.DelChan))
 
 	default: //работаем просто с мапой
 		r.Get("/{alias}", geturl.GetURL(log, mapURL))
-		r.Get("/api/user/urls", getuserallurl.GetUserAllURL(log, mapURL))
 		r.Post("/", saveurl.PostURL(log, mapURL))
 		r.Post("/api/shorten", saveurljson.PostURLjson(log, mapURL))
 		r.Post("/api/shorten/batch", batch.PostBatch(log, mapURL))
-		r.Delete("/api/user/urls", deletedflag.DeleteShortURL(log, mapURL.DelChan))
+
 	}
 
 	//запускаем сервер
