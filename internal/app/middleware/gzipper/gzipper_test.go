@@ -3,6 +3,7 @@ package gzipper
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"io"
 	"log/slog"
 	"net/http/httptest"
@@ -13,6 +14,7 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/geturl"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurl"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurljson"
+	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/mapstorage"
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
@@ -70,8 +72,14 @@ func TestNewMwGzipper(t *testing.T) {
 		slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 	)
 	var m = mapstorage.NewMap()
-	m.URLStorage["practicum"] = "https://practicum.yandex.ru/"
-	m.URLStorage["map"] = "https://golangify.com/map"
+	m.URLStorage["practicum"] = config.URLWithUserID{
+		OriginalURL: "https://practicum.yandex.ru/",
+		UserID: 1,
+	}
+	m.URLStorage["map"] = config.URLWithUserID{
+		OriginalURL: "https://golangify.com/map",
+		UserID: 1,
+	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -92,7 +100,8 @@ func TestNewMwGzipper(t *testing.T) {
 			r.Get("/{alias}", geturl.GetURL(log, m))
 
 			//запускаем сервер
-			request := httptest.NewRequest(tt.httpMethod, tt.uriString, bytes.NewReader(buf.Bytes()))
+			requestTest := httptest.NewRequest(tt.httpMethod, tt.uriString, bytes.NewReader(buf.Bytes()))
+			request := requestTest.WithContext(context.WithValue(requestTest.Context(), auth.CtxKeyUser, 5))
 			request.Header.Add("Content-Encoding", "gzip")
 			request.Header.Add("Accept-Encoding", "gzip")
 

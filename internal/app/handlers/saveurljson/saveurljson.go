@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/FischukSergey/urlshortener.git/config"
+	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
 	"github.com/go-chi/render"
@@ -35,6 +36,8 @@ type Response struct {
 // Запрос и ответ в формате JSON.
 func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		id := r.Context().Value(auth.CtxKeyUser).(int)
 
 		log.Debug("Handler: PostURLjson")
 		var saveURL []config.SaveShortURL
@@ -74,7 +77,7 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 
 		alias = utilitys.NewRandomString(config.AliasLength) //поправить
 
-		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 		defer cancel()
 		if _, ok := storage.GetStorageURL(ctx, alias); ok {
 			log.Error("Can't add, alias already exist", slog.String("alias:", alias))
@@ -89,6 +92,7 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 		saveURL = append(saveURL, config.SaveShortURL{
 			ShortURL:    alias,
 			OriginalURL: req.URL,
+			UserID:      id,
 		})
 
 		err = storage.SaveStorageURL(ctx, saveURL)
@@ -97,7 +101,7 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 		var res []string
 		if errors.Is(err, dbstorage.ErrURLExists) {
 			res = strings.Split(err.Error(), ":")
-			
+
 			w.WriteHeader(http.StatusConflict)
 			render.JSON(w, r, Response{
 				Result: config.FlagBaseURL + "/" + res[0],
