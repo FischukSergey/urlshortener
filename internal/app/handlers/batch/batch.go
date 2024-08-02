@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/FischukSergey/urlshortener.git/config"
-	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
 	"github.com/go-chi/chi/middleware"
@@ -40,7 +39,6 @@ func PostBatch(log *slog.Logger, storage BatchSaver) http.HandlerFunc {
 
 		log.Debug("Handler: PostBatch")
 		var request []Request
-		userID := r.Context().Value(auth.CtxKeyUser).(int)
 
 		w.Header().Set("Content-Type", "application/json")
 
@@ -79,7 +77,6 @@ func PostBatch(log *slog.Logger, storage BatchSaver) http.HandlerFunc {
 			saveURL = append(saveURL, config.SaveShortURL{ //готовим слайс для записи в БД
 				ShortURL:    alias,
 				OriginalURL: req.OriginalURL,
-				UserID: userID,
 			})
 
 			response = append(response, Response{ //готовим слайс для json ответа

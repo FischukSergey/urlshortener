@@ -5,28 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strconv"
-
-	"github.com/FischukSergey/urlshortener.git/config"
 )
 
 type JSONRaw struct {
 	UUID        string `json:"uuid"`
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
-	DeleteFlag  bool   `json:"delete_flag"`
 }
 
 type JSONFileWriter struct {
 	file       *os.File
 	JSONWriter *json.Encoder
-}
-
-type JSONFileReWriter struct {
-	file       *os.File
-	JSONWriter *json.Encoder
-	//JSONReader *json.Decoder
-	//ScanRaw    *bufio.Scanner
 }
 
 // NewJSONFileWriter() создаем объект с открытым файлом для записи
@@ -41,26 +30,12 @@ func NewJSONFileWriter(fileName string) (*JSONFileWriter, error) {
 	}, nil
 }
 
-// NewJSONFileReWriter() создаем объект с открытым пустым файлом
-func NewJSONFileReWriter(fileName string) (*JSONFileReWriter, error) {
-	file, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_TRUNC|os.O_APPEND, 0666)
-	if err != nil {
-		return nil, err
-	}
-	return &JSONFileReWriter{
-		file:       file,
-		JSONWriter: json.NewEncoder(file),
-		//JSONReader: json.NewDecoder(file),
-		//ScanRaw:    bufio.NewScanner(file),
-	}, nil
-}
-
 // Write() метод для записи новой json строки в файл
-func (fs *JSONFileWriter) Write(s config.SaveShortURL) error {
+func (fs *JSONFileWriter) Write(alias, urlOriginal string) error {
 	raw := JSONRaw{
-		ShortURL:    s.ShortURL,
-		OriginalURL: s.OriginalURL,
-		UUID:        strconv.Itoa(s.UserID),
+		ShortURL:    alias,
+		OriginalURL: urlOriginal,
+		UUID:        "1", //TODO заменить на реальный ID
 	}
 
 	return fs.JSONWriter.Encode(raw)
@@ -88,8 +63,8 @@ func NewJSONFileReader(filename string) (*JSONFileReader, error) {
 	}, nil
 }
 
-// Метод ReadToMap() принимает мапу(пустую) и заполняет ее данными из json файла
-func (fr *JSONFileReader) ReadToMap(mapURL map[string]config.URLWithUserID) error { //(map[string]string, error) { //чтение файла в мапу до запуска сервера, поэтому работаем без mutex
+//Метод ReadToMap() принимает мапу(пустую) и заполняет ее данными из json файла
+func (fr *JSONFileReader) ReadToMap(mapURL map[string]string) error{ //(map[string]string, error) { //чтение файла в мапу до запуска сервера, поэтому работаем без mutex
 	defer fr.file.Close()
 
 	for fr.ScanRaw.Scan() { //построчно читаем, декодируем и пишем в мапу
@@ -102,43 +77,17 @@ func (fr *JSONFileReader) ReadToMap(mapURL map[string]config.URLWithUserID) erro
 		}
 		if _, ok := mapURL[mapLine.ShortURL]; ok {
 			fmt.Printf("Алиас %s дублируется:\n", mapLine.ShortURL)
-			continue
+		} else {
+			mapURL[mapLine.ShortURL] = mapLine.OriginalURL
 		}
-		userID, err := strconv.Atoi(mapLine.UUID)
-		if err != nil { //если ID  не порядковый номер
-			userID = -1
-		}
-		mapURL[mapLine.ShortURL] = config.URLWithUserID{
-			OriginalURL: mapLine.OriginalURL,
-			UserID:      userID,
-			DeleteFlag:  mapLine.DeleteFlag,
-		}
-
 	}
 	return nil //mapURL, nil
 }
+
 func (fr *JSONFileReader) Close() error {
 	return fr.file.Close()
 }
 
-//DeleteFlag метод помечает на удаление все запрошенные пользователем записи 
-func (rr *JSONFileReWriter) DeleteFlag(mapLines map[string]config.URLWithUserID) error {
-
-	for mapLine := range mapLines {
-		raw := JSONRaw{
-			ShortURL:    mapLine,
-			OriginalURL: mapLines[mapLine].OriginalURL,
-			UUID:        strconv.Itoa(mapLines[mapLine].UserID),
-			DeleteFlag:  mapLines[mapLine].DeleteFlag,
-		}
-		err := rr.JSONWriter.Encode(raw)
-		if err != nil {
-			return fmt.Errorf("no write json row with ShortURL: %s", mapLine)
-		}
-	}
-	return nil //mapURL, nil
-}
-
-func (rr *JSONFileReWriter) Close() error {
-	return rr.file.Close()
-}
+// {"uuid":"1","short_url":"4rSPg8ap","original_url":"http://yandex.ru"}
+// {"uuid":"2","short_url":"edVPg3ks","original_url":"http://ya.ru"}
+// {"uuid":"3","short_url":"dG56Hqxm","original_url":"http://practicum.yandex.ru"}
