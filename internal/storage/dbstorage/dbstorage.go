@@ -117,7 +117,7 @@ func (s *Storage) GetPingDB() error {
 // GetStorageURL() метод получения URL по алиасу
 func (s *Storage) GetStorageURL(ctx context.Context, alias string) (string, bool) {
 	const where = "dbstorage.GetStorageURL"
-	log = log.With(slog.String("method from", where))
+	//log = log.With(slog.String("method from", where))
 
 	query := "SELECT url, deletedflag FROM urlshort WHERE alias=$1;"
 
