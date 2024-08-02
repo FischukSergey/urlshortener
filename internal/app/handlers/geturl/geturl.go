@@ -26,14 +26,21 @@ func GetURL(log *slog.Logger, storage URLGetter) http.HandlerFunc {
 			http.Error(w, "alias is empty", http.StatusBadRequest)
 			return
 		}
-		
+
 		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 		defer cancel()
 		url, ok := storage.GetStorageURL(ctx, alias)
 
-		if !ok {
+		if !ok && url == "" { //url не существует
 			http.Error(w, "alias not found", http.StatusBadRequest)
 			log.Error("alias not found", slog.String("alias:", alias))
+			return
+		}
+
+		if !ok { //url существует, но помечен на удаление
+			http.Error(w, "shortURL deleted", http.StatusGone)
+			log.Info("shortURL deleted", slog.String("shortURL:", alias))
+
 			return
 		}
 
