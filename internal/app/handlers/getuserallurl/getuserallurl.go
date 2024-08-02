@@ -38,7 +38,6 @@ func GetUserAllURL(log *slog.Logger, storage AllURLGetter) http.HandlerFunc {
 			return
 		}
 
-		//TODO: вставить вызов метода стораджа ДБ
 		var result []AllURLUserID
 		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 		defer cancel()

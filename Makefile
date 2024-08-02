@@ -34,6 +34,7 @@ autotest:
 				-binary-path=cmd/shortener/shortener \
 				-file-storage-path=tmp/short-url-db.json \
 				-source-path=./ \
+				-server-port=localhost:8080 \
 				-database-dsn='user=postgres password=postgres host=localhost port=5432 dbname=urlshortdb sslmode=disable'
 .PHONY: autotest
 
