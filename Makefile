@@ -21,7 +21,7 @@ defaultserver:
 
 test:
 				@echo "Running unit tests"
-				go test -race -count=1 ./...
+				go test -race -count=1 -cover ./...
 				#go test ./internal/app/handlers/geturl/
 				#go test ./internal/app/handlers/saveurl/
 .PHONY: test
@@ -45,4 +45,4 @@ autotest:
 # /Users/sergeymac/dev/urlshortener/shortenertestbeta-darwin-arm64 -test.v -test.run=^TestIteration9$ -binary-path=cmd/shortener/shortener -file-storage-path=tmp/short-url-db.json -source-path=tmp/short-url-db.json -database-dsn=urlshortdb
 # pg_ctl -D /usr/local/pgsql/data stop/start
 # go build -o shortener *.go
-#
+# проверка работы гита
