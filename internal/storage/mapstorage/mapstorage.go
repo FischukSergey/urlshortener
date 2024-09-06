@@ -27,7 +27,7 @@ var log = slog.New(
 func NewMap() *DataStore {
 
 	instance := &DataStore{
-		URLStorage: map[string]config.URLWithUserID{},
+		URLStorage: make(map[string]config.URLWithUserID,10000),
 		DelChan:    make(chan config.DeletedRequest, 1024), //устанавливаем каналу буфер
 	}
 	go instance.flushDeletes() //горутина канала fan-in

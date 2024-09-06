@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"time"
+	_"net/http/pprof"
 
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/batch"
@@ -17,7 +18,7 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurl"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurljson"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
-	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/gzipper"
+	//"github.com/FischukSergey/urlshortener.git/internal/app/middleware/gzipper"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/mwlogger"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/jsonstorage"
@@ -33,11 +34,12 @@ func main() {
 	)
 	config.ParseFlags() //инициализируем флаги/переменные окружения конфигурации сервера
 
-	r := chi.NewRouter()             //инициализируем роутер и middleware
+	r := chi.NewRouter()            //инициализируем роутер и middleware
 	r.Use(mwlogger.NewMwLogger(log)) //маршрут в middleware за логированием
-	r.Use(gzipper.NewMwGzipper(log)) //работа со сжатыми запросами/сжатие ответов
+	//r.Use(gzipper.NewMwGzipper(log)) //работа со сжатыми запросами/сжатие ответов
 	r.Use(auth.NewMwToken(log))      //ID session аутентификация пользователя/JWToken в  cookie
 	r.Use(middleware.RequestID)
+	r.Mount("/debug",middleware.Profiler())
 
 	var mapURL = mapstorage.NewMap() //инициализируем мапу
 
@@ -100,12 +102,14 @@ func main() {
 		r.Delete("/api/user/urls", deletedflag.DeleteShortURL(log, mapURL.DelChan))
 	}
 
+		 
+
 	//запускаем сервер
 	srv := &http.Server{
 		Addr:         config.FlagServerPort,
 		Handler:      r,
-		ReadTimeout:  4 * time.Second,
-		WriteTimeout: 4 * time.Second,
+		ReadTimeout:  40 * time.Second,
+		WriteTimeout: 40 * time.Second,
 		IdleTimeout:  30 * time.Second,
 	}
 

@@ -3,6 +3,7 @@ module github.com/FischukSergey/urlshortener.git
 go 1.22.0
 
 require (
+	github.com/brianvoe/gofakeit/v6 v6.28.0
 	github.com/go-chi/chi v1.5.5
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/golang/mock v1.6.0
