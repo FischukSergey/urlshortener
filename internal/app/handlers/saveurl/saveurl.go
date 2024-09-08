@@ -62,7 +62,7 @@ func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 		saveURL = append(saveURL, config.SaveShortURL{
 			ShortURL:    alias,
 			OriginalURL: string(body),
-			UserID: userID,
+			UserID:      userID,
 		})
 
 		err = storage.SaveStorageURL(ctx, saveURL)

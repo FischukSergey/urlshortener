@@ -94,7 +94,7 @@ func NewMwGzipper(log *slog.Logger) func(next http.Handler) http.Handler {
 			// проверяем, что клиент отправил серверу сжатые данные в формате gzip
 			contentEncoding := r.Header.Get("Content-Encoding")
 			sendsGzip := strings.Contains(contentEncoding, "gzip")
-			if sendsGzip { 
+			if sendsGzip {
 				// оборачиваем тело запроса в io.Reader с поддержкой декомпрессии
 				cr, err := newCompressReader(r.Body)
 				if err != nil {

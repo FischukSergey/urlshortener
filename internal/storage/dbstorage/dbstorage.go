@@ -10,13 +10,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/FischukSergey/urlshortener.git/config"
-	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/getuserallurl"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
+
+	"github.com/FischukSergey/urlshortener.git/config"
+	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/getuserallurl"
 )
 
 var ErrURLExists = errors.New("url exists")
@@ -29,8 +30,6 @@ type Storage struct {
 var log = slog.New(
 	slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 )
-
-
 
 // NewDB() создаем объект базы данных postgres
 func NewDB(dbConfig *pgconn.Config) (*Storage, error) {

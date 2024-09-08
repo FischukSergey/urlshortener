@@ -10,15 +10,16 @@ import (
 	"os"
 	"testing"
 
+	"github.com/go-chi/chi"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/geturl"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurl"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurljson"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/mapstorage"
-	"github.com/go-chi/chi"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestNewMwGzipper(t *testing.T) {
@@ -74,11 +75,11 @@ func TestNewMwGzipper(t *testing.T) {
 	var m = mapstorage.NewMap()
 	m.URLStorage["practicum"] = config.URLWithUserID{
 		OriginalURL: "https://practicum.yandex.ru/",
-		UserID: 1,
+		UserID:      1,
 	}
 	m.URLStorage["map"] = config.URLWithUserID{
 		OriginalURL: "https://golangify.com/map",
-		UserID: 1,
+		UserID:      1,
 	}
 
 	for _, tt := range tests {

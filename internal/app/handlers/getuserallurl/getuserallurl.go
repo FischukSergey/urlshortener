@@ -7,9 +7,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-chi/render"
+
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
-	"github.com/go-chi/render"
 )
 
 type AllURLUserID struct {
@@ -55,7 +56,7 @@ func GetUserAllURL(log *slog.Logger, storage AllURLGetter) http.HandlerFunc {
 		//если все успешно
 		for i, resp := range result { //готовим нужный формат для ответа
 			result[i] = AllURLUserID{
-				ShortURL: config.FlagBaseURL + "/" + resp.ShortURL,
+				ShortURL:    config.FlagBaseURL + "/" + resp.ShortURL,
 				OriginalURL: resp.OriginalURL,
 			}
 		}

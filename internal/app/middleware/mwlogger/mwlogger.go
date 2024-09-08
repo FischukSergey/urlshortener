@@ -25,7 +25,7 @@ func NewMwLogger(log *slog.Logger) func(next http.Handler) http.Handler {
 				slog.String("uri", r.RequestURI),
 				slog.String("method", r.Method),
 				slog.Duration("duration", duration),
-				slog.Int("status",newW.Status()),
+				slog.Int("status", newW.Status()),
 				slog.Int("size", newW.BytesWritten()),
 			)
 

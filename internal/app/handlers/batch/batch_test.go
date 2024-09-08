@@ -11,11 +11,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/batch/mock"
-	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/batch/mock"
+	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
 )
 
 func TestPostBatch(t *testing.T) {
@@ -90,12 +91,12 @@ func TestPostBatch(t *testing.T) {
 			s := mock.NewMockBatchSaver(ctrl) //новый storage
 			defer ctrl.Finish()
 
-			requestTest := httptest.NewRequest(http.MethodPost, 
-				"/api/shorten/batch", 
+			requestTest := httptest.NewRequest(http.MethodPost,
+				"/api/shorten/batch",
 				bytes.NewReader([]byte(tt.bodyRequest)))
 			request := requestTest.WithContext(context.WithValue(requestTest.Context(), auth.CtxKeyUser, 5))
 			w := httptest.NewRecorder()
-			
+
 			switch {
 			case tt.want.mockError != nil:
 				s.EXPECT()

@@ -9,11 +9,12 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/mapstorage"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestPostURL(t *testing.T) {

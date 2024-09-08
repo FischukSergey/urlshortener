@@ -43,6 +43,12 @@ autotest:
 				-database-dsn='user=postgres password=postgres host=localhost port=5432 dbname=urlshortdb sslmode=disable'
 .PHONY: autotest
 
+testcover:
+				@echo "Running unit tests into file"
+				go test -coverprofile=coverage.out ./... 
+				go tool cover -func=coverage.out
+.PHONY: testcover
+
 # curl -v -X GET 'http://localhost:8080/map'
 # curl -v -d "http://yandex.ru" -X POST 'http://localhost:8080/'
 # curl -v -d '{"url": "https://codewars.com"}' -H "Content-Type: application/json" POST 'http://localhost:8080/api/shorten'

@@ -10,31 +10,35 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/render"
+
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
-	"github.com/go-chi/chi/middleware"
-	"github.com/go-chi/render"
 )
 
+//BatchSaver интерфейс для сохранения url	
 type BatchSaver interface {
 	SaveStorageURL(ctx context.Context, saveURL []config.SaveShortURL) error
 	GetStorageURL(ctx context.Context, alias string) (string, bool)
 }
 
-type Request struct { //структура запроса
+//Request структура запроса
+type Request struct {
 	CorrelationID string `json:"correlation_id"`
 	OriginalURL   string `json:"original_url"`
 }
 
-type Response struct { // структура ответа
+//Response структура ответа
+type Response struct {
 	CorrelationID string `json:"correlation_id,omitempty"`
 	ShortURL      string `json:"short_url,omitempty"`
 	Error         string `json:"error,omitempty"`
 }
 
-// PostBatch() хендлер обработки множественных записей json
+// PostBatch хендлер обработки множественных записей json.
 func PostBatch(log *slog.Logger, storage BatchSaver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -79,7 +83,7 @@ func PostBatch(log *slog.Logger, storage BatchSaver) http.HandlerFunc {
 			saveURL = append(saveURL, config.SaveShortURL{ //готовим слайс для записи в БД
 				ShortURL:    alias,
 				OriginalURL: req.OriginalURL,
-				UserID: userID,
+				UserID:      userID,
 			})
 
 			response = append(response, Response{ //готовим слайс для json ответа

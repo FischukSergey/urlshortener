@@ -9,10 +9,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/FischukSergey/urlshortener.git/config"
-	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/FischukSergey/urlshortener.git/config"
+	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
 )
 
 type mockStorage struct{}
@@ -26,6 +27,7 @@ func (m *mockStorage) GetAllUserURL(ctx context.Context, userID int) ([]AllURLUs
 	}
 	return nil, nil
 }
+
 var log = slog.New(
 	slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 )
@@ -84,4 +86,3 @@ func TestGetUserAllURL(t *testing.T) {
 		})
 	}
 }
-

@@ -31,7 +31,7 @@ type SaveShortURL struct { //структура для записи сокращ
 type URLWithUserID struct { //структура для записи в мапу
 	OriginalURL string
 	UserID      int
-	DeleteFlag bool
+	DeleteFlag  bool
 }
 
 type DeletedRequest struct { //структура для пакетного удаления записей

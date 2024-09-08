@@ -20,7 +20,8 @@ func NewRandomString(size int) string {
 	}
 	return string(b)
 }
-//NewRandomID генератор случайного ID
+
+// NewRandomID генератор случайного ID
 func NewRandomID(size int) int {
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
 
