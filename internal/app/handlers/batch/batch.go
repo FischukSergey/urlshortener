@@ -19,19 +19,19 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
 )
 
-//BatchSaver интерфейс для сохранения url	
+// BatchSaver интерфейс для сохранения url
 type BatchSaver interface {
 	SaveStorageURL(ctx context.Context, saveURL []config.SaveShortURL) error
 	GetStorageURL(ctx context.Context, alias string) (string, bool)
 }
 
-//Request структура запроса
+// Request структура запроса
 type Request struct {
 	CorrelationID string `json:"correlation_id"`
 	OriginalURL   string `json:"original_url"`
 }
 
-//Response структура ответа
+// Response структура ответа
 type Response struct {
 	CorrelationID string `json:"correlation_id,omitempty"`
 	ShortURL      string `json:"short_url,omitempty"`
