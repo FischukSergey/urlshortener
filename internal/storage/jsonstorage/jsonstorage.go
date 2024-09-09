@@ -10,18 +10,21 @@ import (
 	"github.com/FischukSergey/urlshortener.git/config"
 )
 
+// JSONRaw структура для записи в json файл
 type JSONRaw struct {
-	UUID        string `json:"uuid"`
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
-	DeleteFlag  bool   `json:"delete_flag"`
+	UUID        string `json:"uuid"`         //ID пользователя
+	ShortURL    string `json:"short_url"`    //сокращенный URL
+	OriginalURL string `json:"original_url"` //оригинальный URL
+	DeleteFlag  bool   `json:"delete_flag"`  //флаг на удаление
 }
 
+// JSONFileWriter структура для записи в json файл
 type JSONFileWriter struct {
 	file       *os.File
 	JSONWriter *json.Encoder
 }
 
+// JSONFileReWriter структура для записи в json файл
 type JSONFileReWriter struct {
 	file       *os.File
 	JSONWriter *json.Encoder
@@ -29,7 +32,7 @@ type JSONFileReWriter struct {
 	//ScanRaw    *bufio.Scanner
 }
 
-// NewJSONFileWriter() создаем объект с открытым файлом для записи
+// NewJSONFileWriter создаем объект с открытым файлом для записи
 func NewJSONFileWriter(fileName string) (*JSONFileWriter, error) {
 	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
@@ -66,6 +69,7 @@ func (fs *JSONFileWriter) Write(s config.SaveShortURL) error {
 	return fs.JSONWriter.Encode(raw)
 }
 
+// Close закрывает файл
 func (fs *JSONFileWriter) Close() error {
 	return fs.file.Close()
 }
@@ -117,6 +121,8 @@ func (fr *JSONFileReader) ReadToMap(mapURL map[string]config.URLWithUserID) erro
 	}
 	return nil //mapURL, nil
 }
+
+// Close закрывает файл
 func (fr *JSONFileReader) Close() error {
 	return fr.file.Close()
 }
@@ -136,9 +142,10 @@ func (rr *JSONFileReWriter) DeleteFlag(mapLines map[string]config.URLWithUserID)
 			return fmt.Errorf("no write json row with ShortURL: %s", mapLine)
 		}
 	}
-	return nil //mapURL, nil
+	return nil
 }
 
+// Close закрывает файл
 func (rr *JSONFileReWriter) Close() error {
 	return rr.file.Close()
 }

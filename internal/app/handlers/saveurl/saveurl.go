@@ -16,6 +16,7 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
 )
 
+// URLSaver интерфейс для сохранения url
 type URLSaver interface {
 	SaveStorageURL(ctx context.Context, saveURL []config.SaveShortURL) error
 	GetStorageURL(ctx context.Context, alias string) (string, bool)

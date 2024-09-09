@@ -13,15 +13,17 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
 )
 
+// ctxKey тип для ключей контекста
 type ctxKey int
 
+// TokenExp константа для времени жизни токена
 const (
 	TokenExp          = time.Hour * 3
 	SecretKey         = "supersecretkey"
 	CtxKeyUser ctxKey = iota
 )
 
-// Claims — структура утверждений, которая включает стандартные утверждения
+// Claims структура утверждений, которая включает стандартные утверждения
 // и одно пользовательское — UserID.
 type Claims struct {
 	jwt.RegisteredClaims
@@ -53,7 +55,7 @@ func BuildJWTString() (string, int, error) {
 	return tokenString, id, nil
 }
 
-// проверка валидности токена
+// GetUserID проверка валидности токена
 func GetUserID(tokenString string) int {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims,

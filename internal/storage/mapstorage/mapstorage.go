@@ -13,10 +13,11 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/storage/jsonstorage"
 )
 
+// DataStore структура для хранения данных
 type DataStore struct {
 	mx         sync.RWMutex
-	URLStorage map[string]config.URLWithUserID
-	DelChan    chan config.DeletedRequest //канал для записи отложенных запросов на удаление
+	URLStorage map[string]config.URLWithUserID //хранилище данных
+	DelChan    chan config.DeletedRequest      //канал для записи отложенных запросов на удаление
 }
 
 var log = slog.New(

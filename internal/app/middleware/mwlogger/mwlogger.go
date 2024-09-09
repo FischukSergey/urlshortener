@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/middleware"
 )
 
+// NewMwLogger создаёт новый middleware для логирования запросов
 func NewMwLogger(log *slog.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 

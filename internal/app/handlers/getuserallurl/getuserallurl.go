@@ -13,13 +13,15 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
 )
 
+// AllURLUserID структура для хранения короткого и оригинального URL
 type AllURLUserID struct {
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 	//Error       string `json:"error,omitempty"`
 }
 
-type AllURLGetter interface { //интерфейс с методом поиска по хранилищу (только для БД)
+// AllURLGetter интерфейс для поиска всех url пользователя
+type AllURLGetter interface {
 	GetAllUserURL(ctx context.Context, userID int) ([]AllURLUserID, error)
 }
 

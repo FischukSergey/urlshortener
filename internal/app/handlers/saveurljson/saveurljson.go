@@ -19,15 +19,18 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
 )
 
+// URLSaverJSON интерфейс для сохранения url
 type URLSaverJSON interface {
 	SaveStorageURL(ctx context.Context, saveURL []config.SaveShortURL) error
 	GetStorageURL(ctx context.Context, alias string) (string, bool)
 }
 
+// Request структура запроса
 type Request struct {
 	URL string `json:"url"`
 }
 
+// Response структура ответа
 type Response struct {
 	Result string `json:"result,omitempty"`
 	Error  string `json:"error,omitempty"`
