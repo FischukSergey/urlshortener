@@ -8,20 +8,23 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
 	"github.com/golang-jwt/jwt/v5"
+
+	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
 )
 
+// ctxKey тип для ключей контекста
 type ctxKey int
 
+// TokenExp константа для времени жизни токена
 const (
-	TokenExp         = time.Hour * 3
-	SecretKey        = "supersecretkey"
+	TokenExp          = time.Hour * 3
+	SecretKey         = "supersecretkey"
 	CtxKeyUser ctxKey = iota
 )
 
-// Claims — структура утверждений, которая включает стандартные утверждения
-// и одно пользовательское — UserID
+// Claims структура утверждений, которая включает стандартные утверждения
+// и одно пользовательское — UserID.
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID int
@@ -52,7 +55,7 @@ func BuildJWTString() (string, int, error) {
 	return tokenString, id, nil
 }
 
-// проверка валидности токена
+// GetUserID проверка валидности токена
 func GetUserID(tokenString string) int {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims,
@@ -72,6 +75,9 @@ func GetUserID(tokenString string) int {
 	return claims.UserID
 }
 
+// NewMwToken middleware сессионной аутентификации.
+// если метод POST, то создаём токен и записываем в куки,
+// если метод GET, то проверяем токен на валидность и записываем в контекст
 func NewMwToken(log *slog.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 
@@ -94,7 +100,7 @@ func NewMwToken(log *slog.Logger) func(next http.Handler) http.Handler {
 					log.Error("can`t create signed token", err)
 					return
 				}
-fmt.Println(valueCookie)
+				fmt.Println(valueCookie)
 				http.SetCookie(w, &http.Cookie{ //пишем подписанную куки в ответ запросу
 					Name:  "session_token",
 					Value: valueCookie,
@@ -104,9 +110,9 @@ fmt.Println(valueCookie)
 
 			case err != nil && r.Method != "POST": //если куки не прочитался и метод не POST
 				log.Error("can`t read cookie", err)
-				userID = -1 
+				userID = -1
 
-			case userID==-1 && r.Method != "POST":
+			case userID == -1 && r.Method != "POST":
 				log.Error("id user from cookie absent or invalid")
 			}
 

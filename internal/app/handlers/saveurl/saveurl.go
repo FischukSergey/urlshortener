@@ -16,6 +16,7 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
 )
 
+// URLSaver интерфейс для сохранения url
 type URLSaver interface {
 	SaveStorageURL(ctx context.Context, saveURL []config.SaveShortURL) error
 	GetStorageURL(ctx context.Context, alias string) (string, bool)
@@ -62,7 +63,7 @@ func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 		saveURL = append(saveURL, config.SaveShortURL{
 			ShortURL:    alias,
 			OriginalURL: string(body),
-			UserID: userID,
+			UserID:      userID,
 		})
 
 		err = storage.SaveStorageURL(ctx, saveURL)

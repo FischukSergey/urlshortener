@@ -8,8 +8,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	config "github.com/FischukSergey/urlshortener.git/config"
 	gomock "github.com/golang/mock/gomock"
+
+	config "github.com/FischukSergey/urlshortener.git/config"
 )
 
 // MockBatchSaver is a mock of BatchSaver interface.

@@ -3,10 +3,10 @@ package getpingdb
 import (
 	"log/slog"
 	"net/http"
-
 )
 
-type DBPinger interface { //имплементирует интерфейс с методом поиска по хранилищу
+// DBPinger интерфейс для проверки коннекта с базой данных
+type DBPinger interface {
 	GetPingDB() error
 }
 

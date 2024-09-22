@@ -13,10 +13,11 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/storage/jsonstorage"
 )
 
+// DataStore структура для хранения данных
 type DataStore struct {
 	mx         sync.RWMutex
-	URLStorage map[string]config.URLWithUserID
-	DelChan    chan config.DeletedRequest //канал для записи отложенных запросов на удаление
+	URLStorage map[string]config.URLWithUserID //хранилище данных
+	DelChan    chan config.DeletedRequest      //канал для записи отложенных запросов на удаление
 }
 
 var log = slog.New(
@@ -27,7 +28,7 @@ var log = slog.New(
 func NewMap() *DataStore {
 
 	instance := &DataStore{
-		URLStorage: map[string]config.URLWithUserID{},
+		URLStorage: make(map[string]config.URLWithUserID, 10000),
 		DelChan:    make(chan config.DeletedRequest, 1024), //устанавливаем каналу буфер
 	}
 	go instance.flushDeletes() //горутина канала fan-in
@@ -127,7 +128,7 @@ func (ds *DataStore) GetAllUserURL(ctx context.Context, userID int) ([]getuseral
 			})
 		}
 	}
-	
+
 	return getUserURLs, nil
 }
 

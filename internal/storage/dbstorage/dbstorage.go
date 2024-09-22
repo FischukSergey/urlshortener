@@ -10,17 +10,20 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/FischukSergey/urlshortener.git/config"
-	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/getuserallurl"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
+
+	"github.com/FischukSergey/urlshortener.git/config"
+	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/getuserallurl"
 )
 
+// ErrURLExists ошибка, если url уже существует
 var ErrURLExists = errors.New("url exists")
 
+// Storage структура для работы с базой данных
 type Storage struct {
 	DB      *pgxpool.Pool
 	DelChan chan config.DeletedRequest //канал для записи отложенных запросов на удаление
@@ -30,9 +33,7 @@ var log = slog.New(
 	slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 )
 
-
-
-// NewDB() создаем объект базы данных postgres
+// NewDB создаем объект базы данных postgres
 func NewDB(dbConfig *pgconn.Config) (*Storage, error) {
 
 	dbconn := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable",
@@ -102,7 +103,7 @@ func (s *Storage) flushDeletes() {
 	}
 }
 
-// GetPingDB() метод проверки соединения с базой
+// GetPingDB метод проверки соединения с базой
 func (s *Storage) GetPingDB() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -114,7 +115,7 @@ func (s *Storage) GetPingDB() error {
 	return nil
 }
 
-// GetStorageURL() метод получения URL по алиасу
+// GetStorageURL метод получения URL по алиасу
 func (s *Storage) GetStorageURL(ctx context.Context, alias string) (string, bool) {
 	const where = "dbstorage.GetStorageURL"
 	//log = log.With(slog.String("method from", where))
@@ -139,7 +140,7 @@ func (s *Storage) GetStorageURL(ctx context.Context, alias string) (string, bool
 	return resURL, true
 }
 
-// SaveStorage() метод сохранения alias в BD
+// SaveStorage метод сохранения alias в BD
 func (s *Storage) SaveStorageURL(ctx context.Context, saveURL []config.SaveShortURL) error {
 	const op = "dbstorage.SaveStorageURL"
 
@@ -169,6 +170,7 @@ func (s *Storage) SaveStorageURL(ctx context.Context, saveURL []config.SaveShort
 	return nil
 }
 
+// Close закрывает соединение с базой данных
 func (s *Storage) Close() {
 	s.DB.Close()
 }

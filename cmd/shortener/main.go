@@ -5,8 +5,13 @@ import (
 	stdLog "log"
 	"log/slog"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"time"
+
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
+	"github.com/jackc/pgx/v5/pgconn"
 
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/batch"
@@ -22,9 +27,6 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/jsonstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/mapstorage"
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
-	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func main() {
@@ -38,6 +40,7 @@ func main() {
 	r.Use(gzipper.NewMwGzipper(log)) //работа со сжатыми запросами/сжатие ответов
 	r.Use(auth.NewMwToken(log))      //ID session аутентификация пользователя/JWToken в  cookie
 	r.Use(middleware.RequestID)
+	r.Mount("/debug", middleware.Profiler())
 
 	var mapURL = mapstorage.NewMap() //инициализируем мапу
 
@@ -104,8 +107,8 @@ func main() {
 	srv := &http.Server{
 		Addr:         config.FlagServerPort,
 		Handler:      r,
-		ReadTimeout:  4 * time.Second,
-		WriteTimeout: 4 * time.Second,
+		ReadTimeout:  40 * time.Second,
+		WriteTimeout: 40 * time.Second,
 		IdleTimeout:  30 * time.Second,
 	}
 

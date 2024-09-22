@@ -9,11 +9,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/FischukSergey/urlshortener.git/config"
-	"github.com/FischukSergey/urlshortener.git/internal/storage/mapstorage"
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/FischukSergey/urlshortener.git/config"
+	"github.com/FischukSergey/urlshortener.git/internal/storage/mapstorage"
 )
 
 func TestGetURL(t *testing.T) {
@@ -59,13 +60,13 @@ func TestGetURL(t *testing.T) {
 		slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 	)
 	var m = mapstorage.NewMap()
-m.URLStorage["practicum"] = config.URLWithUserID{
+	m.URLStorage["practicum"] = config.URLWithUserID{
 		OriginalURL: "https://practicum.yandex.ru/",
-		UserID: 1,
+		UserID:      1,
 	}
 	m.URLStorage["map"] = config.URLWithUserID{
 		OriginalURL: "https://golangify.com/map",
-		UserID: 1,
+		UserID:      1,
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

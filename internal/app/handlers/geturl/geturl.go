@@ -9,7 +9,8 @@ import (
 	"github.com/go-chi/chi"
 )
 
-type URLGetter interface { //имплементирует интерфейс с методом поиска по хранилищу
+// URLGetter интерфейс для поиска url
+type URLGetter interface {
 	GetStorageURL(ctx context.Context, alias string) (string, bool)
 }
 

@@ -5,16 +5,21 @@ import (
 	"os"
 )
 
+// AliasLength - длина сокращенного URL
 const (
 	AliasLength int = 8
 )
 
-var ipAddr string = "localhost" //адрес сервера
-var FlagServerPort string       //адрес сервера и порта
-var FlagBaseURL string          //базовый адрес для редиректа
-var FlagFileStoragePath string  //базовый путь хранения файла db json
-var FlagDatabaseDSN string      //наименование базы данных
+// переменные для парсинга флагов
+var (
+	ipAddr              string = "localhost" //адрес сервера
+	FlagServerPort      string               //адрес сервера и порта
+	FlagBaseURL         string               //базовый адрес для редиректа
+	FlagFileStoragePath string               //базовый путь хранения файла db json
+	FlagDatabaseDSN     string               //наименование базы данных
+)
 
+// DBConfig - структура для конфигурации подключения к БД
 type DBConfig struct {
 	User     string // = "postgres"
 	Password string // = "postgres"
@@ -23,28 +28,33 @@ type DBConfig struct {
 	Database string // = "urlshortdb"
 }
 
-type SaveShortURL struct { //структура для записи сокращенных urlов в БД
-	ShortURL    string
-	OriginalURL string
-	UserID      int
-}
-type URLWithUserID struct { //структура для записи в мапу
-	OriginalURL string
-	UserID      int
-	DeleteFlag bool
+// SaveShortURL - структура для записи сокращенных urlов в БД
+type SaveShortURL struct {
+	ShortURL    string //сокращенный URL
+	OriginalURL string //оригинальный URL
+	UserID      int    //идентификатор пользователя
 }
 
-type DeletedRequest struct { //структура для пакетного удаления записей
-	ShortURL string
-	UserID   int
+// URLWithUserID - структура для записи в мапу
+type URLWithUserID struct {
+	OriginalURL string //оригинальный URL
+	UserID      int    //идентификатор пользователя
+	DeleteFlag  bool   //флаг удаления
 }
 
+// DeletedRequest - структура для пакетного удаления записей
+type DeletedRequest struct {
+	ShortURL string //сокращенный URL
+	UserID   int    //идентификатор пользователя
+}
+
+// ParseFlags - функция для парсинга флагов
 func ParseFlags() {
 
-	defaultRunAddr := ipAddr + ":8080"
-	defaultBaseURL := "http://" + defaultRunAddr
-	defaultFileStoragePath := "./tmp/short-url-db.json"
-	defaultDatabaseDSN := "" //"user=postgres password=postgres host=localhost port=5432 dbname=urlshortdb sslmode=disable"
+	defaultRunAddr := ipAddr + ":8080"                  //адрес сервера и порта
+	defaultBaseURL := "http://" + defaultRunAddr        //базовый адрес для редиректа
+	defaultFileStoragePath := "./tmp/short-url-db.json" //базовый путь хранения файла db json
+	defaultDatabaseDSN := ""                            //"user=postgres password=postgres host=localhost port=5432 dbname=urlshortdb sslmode=disable"
 
 	flag.StringVar(&FlagServerPort, "a", defaultRunAddr, "address and port to run server")
 	flag.StringVar(&FlagBaseURL, "b", defaultBaseURL, "base redirect path")

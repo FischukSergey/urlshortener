@@ -15,6 +15,7 @@ type compressWriter struct {
 	zw *gzip.Writer
 }
 
+// newCompressWriter создаёт новый compressWriter
 func newCompressWriter(w http.ResponseWriter) *compressWriter {
 	return &compressWriter{
 		w:  w,
@@ -22,14 +23,17 @@ func newCompressWriter(w http.ResponseWriter) *compressWriter {
 	}
 }
 
+// Header возвращает http.Header
 func (c *compressWriter) Header() http.Header {
 	return c.w.Header()
 }
 
+// Write записывает данные в gzip.Writer
 func (c *compressWriter) Write(p []byte) (int, error) {
 	return c.zw.Write(p)
 }
 
+// WriteHeader устанавливает заголовок ответа
 func (c *compressWriter) WriteHeader(statusCode int) {
 	if statusCode < 300 || statusCode == 307 {
 		c.w.Header().Set("Content-Encoding", "gzip")
@@ -49,6 +53,7 @@ type compressReader struct {
 	zr *gzip.Reader
 }
 
+// newCompressReader создаёт новый compressReader
 func newCompressReader(r io.ReadCloser) (*compressReader, error) {
 	zr, err := gzip.NewReader(r)
 	if err != nil {
@@ -61,10 +66,12 @@ func newCompressReader(r io.ReadCloser) (*compressReader, error) {
 	}, nil
 }
 
+// Read считывает данные из gzip.Reader
 func (c compressReader) Read(p []byte) (n int, err error) {
 	return c.zr.Read(p)
 }
 
+// Close закрывает gzip.Reader
 func (c *compressReader) Close() error {
 	if err := c.r.Close(); err != nil {
 		return err
@@ -72,6 +79,7 @@ func (c *compressReader) Close() error {
 	return c.zr.Close()
 }
 
+// NewMwGzipper создаёт новый middleware для сжатия и декомпрессии данных
 func NewMwGzipper(log *slog.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 
@@ -94,7 +102,7 @@ func NewMwGzipper(log *slog.Logger) func(next http.Handler) http.Handler {
 			// проверяем, что клиент отправил серверу сжатые данные в формате gzip
 			contentEncoding := r.Header.Get("Content-Encoding")
 			sendsGzip := strings.Contains(contentEncoding, "gzip")
-			if sendsGzip { 
+			if sendsGzip {
 				// оборачиваем тело запроса в io.Reader с поддержкой декомпрессии
 				cr, err := newCompressReader(r.Body)
 				if err != nil {
