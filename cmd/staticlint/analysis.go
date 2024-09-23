@@ -18,7 +18,8 @@ var ErrNoExitAnalizer = &analysis.Analyzer{
 	Doc:  "Check for os.Exit in main function",
 	Run:  run,
 }
-//Run - функция, которая выполняет анализ кода на наличие os.Exit в функции main
+
+// Run - функция, которая выполняет анализ кода на наличие os.Exit в функции main
 func run(pass *analysis.Pass) (interface{}, error) {
 	for _, file := range pass.Files {
 		if file.Name.Name != packageName {
@@ -32,7 +33,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 						switch stmt := node.(type) {
 						case *ast.CallExpr: //если вызов функции
 							switch fun := stmt.Fun.(type) {
-							case *ast.SelectorExpr: //если вызов функции 
+							case *ast.SelectorExpr: //если вызов функции
 								if fun.Sel.Name == "Exit" &&
 									fun.X.(*ast.Ident).Name == "os" { //если имя функции равно Exit и имя пакета равно os
 									pass.Reportf(stmt.Pos(), "os.Exit called in main function not allowed") //сообщение об ошибке
