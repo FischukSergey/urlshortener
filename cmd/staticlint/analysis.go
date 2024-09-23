@@ -8,13 +8,13 @@ import (
 	"honnef.co/go/tools/staticcheck"
 )
 
-//переменные для анализатора с именем файла и функцией
+// переменные для анализатора с именем файла и функцией
 const (
 	funcName    = "main"
 	packageName = "main"
 )
 
-//ErrNoExitAnalizer - анализатор, который проверяет наличие os.Exit в функции main
+// ErrNoExitAnalizer - анализатор, который проверяет наличие os.Exit в функции main
 var ErrNoExitAnalizer = &analysis.Analyzer{
 	Name: "ErrNoExitAnalizer",
 	Doc:  "Check for os.Exit in main function",
