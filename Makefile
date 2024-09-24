@@ -58,4 +58,6 @@ testcover:
 # go build -o shortener *.go
 
 # go build -o ./cmd/staticlint/mylint ./cmd/staticlint/main.go
-#./cmd/staticlint/mylint ./cmd/... 2> ./cmd/staticlint/result.txt
+#./cmd/staticlint/mylint ./... 2> ./cmd/staticlint/result.txt
+
+# goimports -local "github.com/FischukSergey/urlshortener.git" -w -l ./

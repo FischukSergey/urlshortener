@@ -1,8 +1,6 @@
 package main
 
 import (
-	
-	customAnalysis "github.com/FischukSergey/urlshortener.git/cmd/staticlint/mycheck"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/multichecker"
 	"golang.org/x/tools/go/analysis/passes/appends"
@@ -49,6 +47,8 @@ import (
 	"golang.org/x/tools/go/analysis/passes/unusedwrite"
 	"golang.org/x/tools/go/analysis/passes/usesgenerics"
 	"honnef.co/go/tools/staticcheck"
+
+	customAnalysis "github.com/FischukSergey/urlshortener.git/cmd/staticlint/mycheck"
 )
 
 func main() {
