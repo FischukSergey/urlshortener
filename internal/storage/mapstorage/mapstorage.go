@@ -10,14 +10,15 @@ import (
 
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/getuserallurl"
+	"github.com/FischukSergey/urlshortener.git/internal/logger"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/jsonstorage"
 )
 
 // DataStore структура для хранения данных
 type DataStore struct {
-	mx         sync.RWMutex
 	URLStorage map[string]config.URLWithUserID //хранилище данных
 	DelChan    chan config.DeletedRequest      //канал для записи отложенных запросов на удаление
+	mx         sync.RWMutex
 }
 
 var log = slog.New(
@@ -56,7 +57,7 @@ func (ds *DataStore) flushDeletes() {
 			//отправим на удаление все пришедшие сообщения одновременно
 			err := ds.DeleteBatch(context.TODO(), delmsges...)
 			if err != nil {
-				log.Debug("cannot delete messages", err)
+				log.Debug("cannot delete messages", logger.Err(err))
 				// не будем стирать сообщения, попробуем отправить их чуть позже
 				continue
 			}
@@ -103,7 +104,7 @@ func (ds *DataStore) SaveStorageURL(ctx context.Context, saveURL []config.SaveSh
 		for _, s := range saveURL {
 			//пишем в текстовый файл json строку
 			if err = jsonDB.Write(s); err != nil {
-				log.Error("Error writing to the file 'short-url-db.json'", (err))
+				log.Error("Error writing to the file 'short-url-db.json'", logger.Err(err))
 			}
 		}
 	}

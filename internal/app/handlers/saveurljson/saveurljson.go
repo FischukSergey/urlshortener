@@ -15,6 +15,7 @@ import (
 
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
+	"github.com/FischukSergey/urlshortener.git/internal/logger"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
 )
@@ -62,7 +63,7 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 		}
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			log.Error("failed to decode json request body", err)
+			log.Error("failed to decode json request body", logger.Err(err))
 			render.JSON(w, r, Response{
 				Error: "failed to decode json request",
 			})
@@ -122,7 +123,7 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 				Error: "can't save JSON",
 			})
 
-			log.Error("Can't save JSON", err)
+			log.Error("Can't save JSON", logger.Err(err))
 			return
 		}
 
@@ -137,7 +138,7 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 			Result: newPath,
 		})
 		if err != nil {
-			log.Error("Can't make JSON", err)
+			log.Error("Can't make JSON", logger.Err(err))
 		}
 		w.Write(resp)
 

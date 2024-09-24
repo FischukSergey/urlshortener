@@ -56,4 +56,6 @@ testcover:
 # /Users/sergeymac/dev/urlshortener/shortenertestbeta-darwin-arm64 -test.v -test.run=^TestIteration9$ -binary-path=cmd/shortener/shortener -file-storage-path=tmp/short-url-db.json -source-path=tmp/short-url-db.json -database-dsn=urlshortdb
 # pg_ctl -D /usr/local/pgsql/data stop/start
 # go build -o shortener *.go
-# проверка работы гита
+
+# go build -o ./cmd/staticlint/mylint ./cmd/staticlint/main.go
+#./cmd/staticlint/mylint ./cmd/... 2> ./cmd/staticlint/result.txt

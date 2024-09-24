@@ -12,6 +12,7 @@ import (
 
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
+	"github.com/FischukSergey/urlshortener.git/internal/logger"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
 )
@@ -82,7 +83,7 @@ func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 
 		if err != nil {
 			http.Error(w, "Error write DB", http.StatusInternalServerError)
-			log.Error("Error write DB", err)
+			log.Error("Error write DB", logger.Err(err))
 			return
 		}
 

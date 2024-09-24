@@ -31,16 +31,16 @@ func TestPostBatch(t *testing.T) {
 	// }
 
 	type want struct {
-		contentType  string
-		statusCode   int
-		bodyResponse string
 		mockError    error
+		contentType  string
+		bodyResponse string
+		statusCode   int
 	}
 
 	tests := []struct {
-		name        string
-		bodyRequest string
 		want        want
+		bodyRequest string
+		name        string
 	}{
 		{
 			name: "simple test",

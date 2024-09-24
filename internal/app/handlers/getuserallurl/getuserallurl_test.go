@@ -34,10 +34,10 @@ var log = slog.New(
 
 func TestGetUserAllURL(t *testing.T) {
 	tests := []struct {
+		expectedURLs   []AllURLUserID		
 		name           string
 		userID         int
 		expectedStatus int
-		expectedURLs   []AllURLUserID
 	}{
 		{
 			name:           "User with URLs",

@@ -11,6 +11,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
 	github.com/stretchr/testify v1.9.0
+	honnef.co/go/tools v0.5.1
 )
 
 require (
@@ -25,7 +26,6 @@ require (
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	honnef.co/go/tools v0.5.1 // indirect
 )
 
 require (
@@ -34,5 +34,5 @@ require (
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240531212143-b6235391adb3
-	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gopkg.in/yaml.v3 v3.0.1
 )

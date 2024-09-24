@@ -1,11 +1,9 @@
-package main
+package mycheck
 
 import (
 	"go/ast"
 
 	"golang.org/x/tools/go/analysis"
-	"golang.org/x/tools/go/analysis/multichecker"
-	"honnef.co/go/tools/staticcheck"
 )
 
 // переменные для анализатора с именем файла и функцией
@@ -50,17 +48,4 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		})
 	}
 	return nil, nil
-}
-
-func main() {
-
-	var myChecks = []*analysis.Analyzer{
-		ErrNoExitAnalizer,
-	}
-
-	for _, v := range staticcheck.Analyzers {
-		myChecks = append(myChecks, v.Analyzer)
-	}
-	multichecker.Main(myChecks...)
-
 }

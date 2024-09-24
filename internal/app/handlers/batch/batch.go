@@ -15,6 +15,7 @@ import (
 
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
+	"github.com/FischukSergey/urlshortener.git/internal/logger"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
 )
@@ -60,7 +61,7 @@ func PostBatch(log *slog.Logger, storage BatchSaver) http.HandlerFunc {
 		}
 		if err != nil { //убеждаемся, что декодировали
 			w.WriteHeader(http.StatusBadRequest)
-			log.Error("failed to decode json request body", err)
+			log.Error("failed to decode json request body", logger.Err(err))
 			render.JSON(w, r, Response{
 				Error: "failed to decode json request",
 			})
@@ -113,7 +114,7 @@ func PostBatch(log *slog.Logger, storage BatchSaver) http.HandlerFunc {
 
 			if err != nil {
 				http.Error(w, "filed JSON batch", http.StatusInsufficientStorage)
-				log.Error("Can't save JSON batch", err)
+				log.Error("Can't save JSON batch", logger.Err(err))
 				return
 			}
 
