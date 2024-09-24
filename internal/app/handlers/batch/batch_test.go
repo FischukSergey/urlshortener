@@ -25,11 +25,6 @@ func TestPostBatch(t *testing.T) {
 		slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 	)
 
-	// type args struct {
-	// 	log     *slog.Logger
-	// 	storage BatchSaver
-	// }
-
 	type want struct {
 		mockError    error
 		contentType  string
@@ -37,11 +32,13 @@ func TestPostBatch(t *testing.T) {
 		statusCode   int
 	}
 
-	tests := []struct {
-		want        want
-		bodyRequest string
+	type test struct {
 		name        string
-	}{
+		bodyRequest string
+		want        want
+	}
+
+	tests := []test{
 		{
 			name: "simple test",
 			bodyRequest: `[

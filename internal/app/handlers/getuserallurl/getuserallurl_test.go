@@ -32,13 +32,15 @@ var log = slog.New(
 	slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 )
 
+type test struct {
+	name           string
+	expectedURLs   []AllURLUserID
+	expectedStatus int
+	userID         int
+}
+
 func TestGetUserAllURL(t *testing.T) {
-	tests := []struct {
-		expectedURLs   []AllURLUserID
-		name           string
-		userID         int
-		expectedStatus int
-	}{
+	tests := []test{
 		{
 			name:           "User with URLs",
 			userID:         1,

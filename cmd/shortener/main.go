@@ -118,5 +118,4 @@ func main() {
 		fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
 		return
 	}
-	os.Exit(0)
 }

@@ -1,3 +1,13 @@
+// Multichecker состоящий из стандартных статических анализаторов пакета
+// golang.org/x/tools/go/analysis/passes и анализаторов из пакета staticcheck.io.
+// Полный список анализаторов из staticcheck.io можно найти в файле staticcheck.yaml
+// Кроме того, добавлены анализаторы, обнаруживающие вызовы os.Exit в функции main.
+//
+// Использование:
+//
+// В корне проекта запустите 'make my-lint'.
+// Команда создаст файл result.txt с результатами анализа.
+// Для удаления файла result.txt запустить комманду 'make clear-my-lint'
 package main
 
 import (

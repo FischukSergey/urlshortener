@@ -38,9 +38,9 @@ func TestDeleteShortURL(t *testing.T) {
 	}
 
 	tests := []struct {
-		requestBody []string
-		want        want
 		name        string
+		want        want
+		requestBody []string
 		userID      int
 	}{
 		{

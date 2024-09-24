@@ -10,6 +10,7 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+cmd/staticlint/result.txt
 
 # Binaries
 cmd/shortener/main
