@@ -140,7 +140,11 @@ func PostURLjson(log *slog.Logger, storage URLSaverJSON) http.HandlerFunc {
 		if err != nil {
 			log.Error("Can't make JSON", logger.Err(err))
 		}
-		w.Write(resp)
+		_, err = w.Write(resp)
+		if err != nil {
+			log.Error("Error write response", logger.Err(err))
+			return
+		}
 
 		log.Info("Request POST json successful", slog.String("json:", string(resp)))
 	}

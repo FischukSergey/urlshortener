@@ -74,7 +74,11 @@ func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 			res = strings.Split(err.Error(), ":")
 			w.WriteHeader(http.StatusConflict)
 			w.Header().Set("Content-Type", "text/plain")
-			w.Write([]byte(config.FlagBaseURL + "/" + res[0]))
+			_, err = w.Write([]byte(config.FlagBaseURL + "/" + res[0]))
+			if err != nil {
+				log.Error("Error write response", logger.Err(err))
+				return
+			}
 			log.Error("Request POST failed, url exists",
 				slog.String("url", saveURL[0].OriginalURL),
 			)
@@ -94,7 +98,11 @@ func PostURL(log *slog.Logger, storage URLSaver) http.HandlerFunc {
 
 		w.WriteHeader(http.StatusCreated)
 		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte(newPath))
+		_, err = w.Write([]byte(newPath))
+		if err != nil {
+			log.Error("Error write response", logger.Err(err))
+			return
+		}
 		log.Info("Request POST successful",
 			slog.String("alias", alias),
 			//slog.String("IDrequest", middleware.GetReqID(r.Context())),

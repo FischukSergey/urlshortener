@@ -32,6 +32,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-chi/render v1.0.3
 	github.com/jackc/pgx/v5 v5.6.0
+	github.com/kisielk/errcheck v1.7.0
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240531212143-b6235391adb3
 	gopkg.in/yaml.v3 v3.0.1

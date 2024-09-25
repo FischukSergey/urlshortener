@@ -100,7 +100,12 @@ func (ds *DataStore) SaveStorageURL(ctx context.Context, saveURL []config.SaveSh
 		if err != nil {
 			return fmt.Errorf("%w. Error opening the file: %s ", err, config.FlagFileStoragePath)
 		}
-		defer jsonDB.Close()
+		defer func() {
+			err := jsonDB.Close()
+			if err != nil {
+				log.Error("Error close file", logger.Err(err))
+			}
+		}()
 		for _, s := range saveURL {
 			//пишем в текстовый файл json строку
 			if err = jsonDB.Write(s); err != nil {
@@ -155,9 +160,14 @@ func (ds *DataStore) DeleteBatch(ctx context.Context, delmsges ...config.Deleted
 		if err != nil {
 			return fmt.Errorf("%w. Error opening the file: %s ", err, config.FlagFileStoragePath)
 		}
-		defer jsonFile.Close()
+		defer func() {
+			err := jsonFile.Close()
+			if err != nil {
+				log.Error("Error close file", logger.Err(err))
+			}
+		}()
 		if err = jsonFile.DeleteFlag(ds.URLStorage); err != nil {
-			fmt.Println(err)
+			log.Error("Error delete flag", logger.Err(err))
 		}
 	}
 

@@ -19,6 +19,7 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurl"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurljson"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
+	"github.com/FischukSergey/urlshortener.git/internal/logger"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/mapstorage"
 )
 
@@ -114,7 +115,12 @@ func TestNewMwGzipper(t *testing.T) {
 			result := w.Result()
 			gz, err := gzip.NewReader(result.Body)
 			require.NoError(t, err)
-			defer gz.Close()
+			defer func() {
+				err := gz.Close()
+				if err != nil {
+					log.Error("Error close gzip", logger.Err(err))
+				}
+			}()
 
 			res, err := io.ReadAll(gz)
 			require.NoError(t, err)

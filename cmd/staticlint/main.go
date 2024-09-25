@@ -58,6 +58,8 @@ import (
 	"golang.org/x/tools/go/analysis/passes/usesgenerics"
 	"honnef.co/go/tools/staticcheck"
 
+	"github.com/kisielk/errcheck/errcheck"
+
 	customAnalysis "github.com/FischukSergey/urlshortener.git/cmd/staticlint/mycheck"
 )
 
@@ -151,6 +153,8 @@ func main() {
 		usesgenerics.Analyzer,
 		// проверяет, есть ли в функции main os.Exit
 		customAnalysis.ErrNoExitAnalizer,
+		// проверяет, что все ошибки, возвращаемые функцией, действительно обрабатываются.
+		errcheck.Analyzer,
 	}
 	config := NewConfig()
 	checks := make(map[string]bool, len(config.Staticcheck))
