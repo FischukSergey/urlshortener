@@ -93,7 +93,7 @@ func NewJSONFileReader(filename string) (*JSONFileReader, error) {
 }
 
 // Метод ReadToMap() принимает мапу(пустую) и заполняет ее данными из json файла
-func (fr *JSONFileReader) ReadToMap(mapURL map[string]config.URLWithUserID) error { //(map[string]string, error) { //чтение файла в мапу до запуска сервера, поэтому работаем без mutex
+func (fr *JSONFileReader) ReadToMap(mapURL map[string]config.URLWithUserID) error { //чтение файла в мапу до запуска сервера, поэтому работаем без mutex
 	defer func() {
 		err := fr.file.Close()
 		if err != nil {

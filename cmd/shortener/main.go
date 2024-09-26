@@ -29,7 +29,18 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/storage/mapstorage"
 )
 
+var (
+	buildVersion = "N/A"
+	buildDate    = "N/A"
+	buildCommit  = "N/A"
+)
+
 func main() {
+	fmt.Println(
+		"Build version: ", buildVersion,
+		"\nBuild date: ", buildDate,
+		"\nBuild commit: ", buildCommit,
+	)
 	var log = slog.New( //инициализируем логгер
 		slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 	)
