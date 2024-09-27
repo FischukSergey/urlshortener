@@ -18,6 +18,7 @@ import (
 
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/getuserallurl"
+	"github.com/FischukSergey/urlshortener.git/internal/logger"
 )
 
 // ErrURLExists ошибка, если url уже существует
@@ -93,7 +94,7 @@ func (s *Storage) flushDeletes() {
 			//отправим на удаление все пришедшие сообщения одновременно
 			err := s.DeleteBatch(context.TODO(), delmsges...)
 			if err != nil {
-				log.Debug("cannot save messages", err)
+				log.Debug("cannot save messages", logger.Err(err))
 				// не будем стирать сообщения, попробуем отправить их чуть позже
 				continue
 			}

@@ -19,9 +19,9 @@ import (
 
 func TestGetURL(t *testing.T) {
 	type want struct {
-		statusCode int
 		location   string
 		resError   string
+		statusCode int
 	}
 
 	tests := []struct {

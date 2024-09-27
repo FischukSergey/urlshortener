@@ -33,15 +33,15 @@ func TestDeleteShortURL(t *testing.T) {
 		DeleteFlag:  false,
 	}
 	type want struct {
-		statusCode int
 		mapStorage map[string]config.URLWithUserID
+		statusCode int
 	}
 
 	tests := []struct {
 		name        string
-		userID      int
-		requestBody []string
 		want        want
+		requestBody []string
+		userID      int
 	}{
 		{
 			name:        "Valid request",

@@ -20,9 +20,9 @@ import (
 
 func TestPostURLjson(t *testing.T) {
 	type want struct {
+		respJSON    string
 		contentType string
 		statusCode  int
-		respJSON    string
 	}
 	type requestJSON struct {
 		jsonString string

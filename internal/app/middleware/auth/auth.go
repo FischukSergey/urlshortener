@@ -10,6 +10,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
+	"github.com/FischukSergey/urlshortener.git/internal/logger"
 	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
 )
 
@@ -97,7 +98,7 @@ func NewMwToken(log *slog.Logger) func(next http.Handler) http.Handler {
 				valueCookie, id, err := BuildJWTString() //вызываем функцию создания и прерываем обработку если неудача
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
-					log.Error("can`t create signed token", err)
+					log.Error("can`t create signed token", logger.Err(err))
 					return
 				}
 				fmt.Println(valueCookie)
@@ -109,7 +110,7 @@ func NewMwToken(log *slog.Logger) func(next http.Handler) http.Handler {
 				userID = id //присваиваем новый ID
 
 			case err != nil && r.Method != "POST": //если куки не прочитался и метод не POST
-				log.Error("can`t read cookie", err)
+				log.Error("can`t read cookie", logger.Err(err))
 				userID = -1
 
 			case userID == -1 && r.Method != "POST":

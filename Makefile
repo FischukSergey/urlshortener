@@ -49,6 +49,17 @@ testcover:
 				go tool cover -func=coverage.out
 .PHONY: testcover
 
+my-lint:
+				@echo "Running lint"
+				go build -o ./cmd/staticlint/mylint ./cmd/staticlint/*.go
+				./cmd/staticlint/mylint ./... 2> ./cmd/staticlint/result.txt
+.PHONY: my-lint
+
+clear-my-lint:
+				@echo "Clearing lint"
+				rm -rf ./cmd/staticlint/result.txt
+.PHONY: clear-my-lint
+
 # curl -v -X GET 'http://localhost:8080/map'
 # curl -v -d "http://yandex.ru" -X POST 'http://localhost:8080/'
 # curl -v -d '{"url": "https://codewars.com"}' -H "Content-Type: application/json" POST 'http://localhost:8080/api/shorten'
@@ -56,4 +67,8 @@ testcover:
 # /Users/sergeymac/dev/urlshortener/shortenertestbeta-darwin-arm64 -test.v -test.run=^TestIteration9$ -binary-path=cmd/shortener/shortener -file-storage-path=tmp/short-url-db.json -source-path=tmp/short-url-db.json -database-dsn=urlshortdb
 # pg_ctl -D /usr/local/pgsql/data stop/start
 # go build -o shortener *.go
-# проверка работы гита
+
+# go build -o ./cmd/staticlint/mylint ./cmd/staticlint/main.go
+#./cmd/staticlint/mylint ./... 2> ./cmd/staticlint/result.txt
+
+# goimports -local "github.com/FischukSergey/urlshortener.git" -w -l ./

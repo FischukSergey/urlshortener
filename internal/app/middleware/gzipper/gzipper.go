@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+
+	"github.com/FischukSergey/urlshortener.git/internal/logger"
 )
 
 // compressWriter реализует интерфейс http.ResponseWriter и позволяет прозрачно для сервера
@@ -97,7 +99,13 @@ func NewMwGzipper(log *slog.Logger) func(next http.Handler) http.Handler {
 					slog.String("Accept-Encoding", acceptEncoding))
 
 				ow = cw //меняем стандартный Response
-				defer cw.Close()
+
+				defer func() {
+					err := cw.Close()
+					if err != nil {
+						log.Error("Error close compressWriter", logger.Err(err))
+					}
+				}()
 			}
 			// проверяем, что клиент отправил серверу сжатые данные в формате gzip
 			contentEncoding := r.Header.Get("Content-Encoding")
@@ -116,7 +124,12 @@ func NewMwGzipper(log *slog.Logger) func(next http.Handler) http.Handler {
 					slog.String("uri", r.RequestURI),
 					slog.String("Content-Encoding", contentEncoding))
 
-				defer cr.Close()
+				defer func() {
+					err := cr.Close()
+					if err != nil {
+						log.Error("Error close compressReader", logger.Err(err))
+					}
+				}()
 			}
 
 			next.ServeHTTP(ow, r)
