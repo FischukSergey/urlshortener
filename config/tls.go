@@ -61,7 +61,7 @@ func GenerateTLS() error {
 		return fmt.Errorf("ошибка кодирования ключа: %w", err)
 	}
 
-	//Создание файлов для сертификата и ключа
+	//Создание и запись файла сертификата
 	certOut, err := os.Create("server.crt")
 	if err != nil {
 		return fmt.Errorf("ошибка создания файла server.crt: %w", err)
@@ -74,6 +74,21 @@ func GenerateTLS() error {
 	_, err = certOut.Write(certPEM.Bytes())
 	if err != nil {
 		return fmt.Errorf("ошибка записи в файл server.crt: %w", err)
+	}
+
+	//Создание и запись файла ключа
+	keyOut, err := os.Create("server.key")
+	if err != nil {
+		return fmt.Errorf("ошибка создания файла server.key: %w", err)
+	}
+	defer func() {
+		if err := keyOut.Close(); err != nil {
+			fmt.Println("Ошибка закрытия файла server.key: %w", err)
+		}
+	}()
+	_, err = keyOut.Write(privateKeyPEM.Bytes())
+	if err != nil {
+		return fmt.Errorf("ошибка записи в файл server.key: %w", err)
 	}
 
 	return nil

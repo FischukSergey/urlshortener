@@ -85,7 +85,7 @@ func ParseFlags() {
 		FlagDatabaseDSN = envDatabaseDSN
 	}
 
-	if envEnableTLS, ok := os.LookupEnv("ENABLE_TLS	"); ok && envEnableTLS != "" {
+	if envEnableTLS, ok := os.LookupEnv("ENABLE_HTTPS"); ok && envEnableTLS != "" {
 		FlagServerTLS = envEnableTLS == "true"
 	}
 }
