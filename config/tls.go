@@ -22,6 +22,7 @@ func GenerateTLS() error {
 			Organization: []string{"yandexpracticum"},
 			Country:      []string{"RU"},
 		},
+		DNSNames:              []string{"localhost"}, // Добавляем DNS имя для проверки "curl -Lv --cacert server.crt https://localhost:8080
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(10, 0, 0),
 		IsCA:                  true,
