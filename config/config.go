@@ -17,6 +17,7 @@ var (
 	FlagBaseURL         string               //базовый адрес для редиректа
 	FlagFileStoragePath string               //базовый путь хранения файла db json
 	FlagDatabaseDSN     string               //наименование базы данных
+	FlagServerTLS       bool                 //флаг для запуска сервера с TLS
 )
 
 // DBConfig - структура для конфигурации подключения к БД
@@ -60,7 +61,7 @@ func ParseFlags() {
 	flag.StringVar(&FlagBaseURL, "b", defaultBaseURL, "base redirect path")
 	flag.StringVar(&FlagFileStoragePath, "f", defaultFileStoragePath, "path file json storage")
 	flag.StringVar(&FlagDatabaseDSN, "d", defaultDatabaseDSN, "name database Postgres")
-
+	flag.BoolVar(&FlagServerTLS, "s", false, "run server with TLS")
 	flag.Parse()
 
 	if envRunAddr := os.Getenv("SERVER_ADDRESS"); envRunAddr != "" {
@@ -82,5 +83,9 @@ func ParseFlags() {
 	if ok && envDatabaseDSN != "" {
 		//if envDatabaseDSN := os.Getenv("DATABASE_DSN"); envDatabaseDSN != "" {
 		FlagDatabaseDSN = envDatabaseDSN
+	}
+
+	if envEnableTLS, ok := os.LookupEnv("ENABLE_TLS	"); ok && envEnableTLS != "" {
+		FlagServerTLS = envEnableTLS == "true"
 	}
 }

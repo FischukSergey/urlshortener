@@ -125,8 +125,19 @@ func main() {
 
 	log.Info("Initializing server", slog.String("address", srv.Addr))
 
-	if err := srv.ListenAndServe(); err != nil {
-		fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
-		return
+	if config.FlagServerTLS {
+		log.Info("Starting TLS server")
+		err := config.GenerateTLS()
+		if err != nil {
+			stdLog.Fatal("Ошибка при генерации TLS конфигурации", err.Error())
+			return
+		}
+		if err := srv.ListenAndServeTLS("server.crt", "server.key"); err != nil {
+			stdLog.Fatal("Ошибка при запуске TLS сервера", err.Error())
+		}
+	} else {
+		if err := srv.ListenAndServe(); err != nil {
+			stdLog.Fatal("Ошибка при запуске сервера", err.Error())
+		}
 	}
 }
