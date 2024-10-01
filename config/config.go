@@ -1,8 +1,11 @@
 package config
 
 import (
+	"encoding/json"
 	"flag"
+	"log"
 	"os"
+	"strconv"
 )
 
 // AliasLength - длина сокращенного URL
@@ -18,7 +21,17 @@ var (
 	FlagFileStoragePath string               //базовый путь хранения файла db json
 	FlagDatabaseDSN     string               //наименование базы данных
 	FlagServerTLS       bool                 //флаг для запуска сервера с TLS
+	FlagFileConfig      string               //путь к файлу конфигурации JSON
 )
+
+// Config - структура для конфигурации
+type Config struct {
+	ServerAddress   string `json:"server_address"`    //адрес сервера и порта
+	BaseURL         string `json:"base_url"`          //базовый адрес для редиректа
+	FileStoragePath string `json:"file_storage_path"` //базовый путь хранения файла db json
+	DatabaseDSN     string `json:"database_dsn"`      //наименование базы данных
+	ServerTLS       bool   `json:"enable_https"`      //флаг для запуска сервера с TLS
+}
 
 // DBConfig - структура для конфигурации подключения к БД
 type DBConfig struct {
@@ -62,30 +75,83 @@ func ParseFlags() {
 	flag.StringVar(&FlagFileStoragePath, "f", defaultFileStoragePath, "path file json storage")
 	flag.StringVar(&FlagDatabaseDSN, "d", defaultDatabaseDSN, "name database Postgres")
 	flag.BoolVar(&FlagServerTLS, "s", false, "run server with TLS")
+	flag.StringVar(&FlagFileConfig, "c", "", "path to config file")
 	flag.Parse()
 
+	//базовые значения конфигурации
+	config := Config{
+		ServerAddress:   "",
+		BaseURL:         "",
+		FileStoragePath: "",
+		DatabaseDSN:     "",
+		ServerTLS:       false,
+	}
+
+	//если есть переменная окружения CONFIG, то используем её
+	if envFileConfig, ok := os.LookupEnv("CONFIG"); ok {
+		FlagFileConfig = envFileConfig
+	}
+	if FlagFileConfig != "" {
+		file, err := os.Open(FlagFileConfig)
+		if err != nil {
+			log.Fatalf("не удалось открыть файл конфигурации: %v", err)
+		}
+		defer func() {
+			if err := file.Close(); err != nil {
+				log.Printf("не удалось закрыть файл конфигурации: %v", err)
+			}
+		}()
+		//парсим файл конфигурации
+		err = json.NewDecoder(file).Decode(&config)
+		if err != nil {
+			log.Fatalf("не удалось распарсить файл конфигурации: %v", err)
+		}
+	}
+
+	//проверяем остальные переменные окружения
+	//приоритет переменных окружения выше флагов, флагов выше конфигурации
 	if envRunAddr := os.Getenv("SERVER_ADDRESS"); envRunAddr != "" {
 		FlagServerPort = envRunAddr
+	} else {
+		if FlagServerPort == "" {
+			FlagServerPort = config.ServerAddress
+		}
 	}
 
 	if envBaseURL := os.Getenv("BASE_URL"); envBaseURL != "" {
 		FlagBaseURL = envBaseURL
+	} else {
+		if FlagBaseURL == "" {
+			FlagBaseURL = config.BaseURL
+		}
 	}
 
 	if envFlagFileStoragePath, ok := os.LookupEnv("FILE_STORAGE_PATH"); ok {
-		// if envFlagFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFlagFileStoragePath != "" {
 		FlagFileStoragePath = envFlagFileStoragePath
 	} else {
-		FlagFileStoragePath = ""
+		if FlagFileStoragePath == "" {
+			FlagFileStoragePath = config.FileStoragePath
+		}
 	}
 
 	envDatabaseDSN, ok := os.LookupEnv("DATABASE_DSN")
 	if ok && envDatabaseDSN != "" {
-		//if envDatabaseDSN := os.Getenv("DATABASE_DSN"); envDatabaseDSN != "" {
 		FlagDatabaseDSN = envDatabaseDSN
+	} else {
+		if FlagDatabaseDSN == "" {
+			FlagDatabaseDSN = config.DatabaseDSN
+		}
 	}
 
 	if envEnableTLS, ok := os.LookupEnv("ENABLE_HTTPS"); ok && envEnableTLS != "" {
-		FlagServerTLS = envEnableTLS == "true"
+		envEnableTLSBool, err := strconv.ParseBool(envEnableTLS)
+		if err != nil {
+			log.Fatalf("не удалось распарсить переменную окружения ENABLE_HTTPS: %v", err)
+		}
+		FlagServerTLS = envEnableTLSBool
+	} else {
+		if !FlagServerTLS {
+			FlagServerTLS = config.ServerTLS
+		}
 	}
 }

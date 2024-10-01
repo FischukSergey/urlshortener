@@ -125,14 +125,14 @@ func main() {
 
 	log.Info("Initializing server", slog.String("address", srv.Addr))
 
-	if config.FlagServerTLS {
+	if config.FlagServerTLS { //если есть флаг TLS, то генерируем сертификат и запускаем TLS сервер
 		log.Info("Starting TLS server")
-		err := config.GenerateTLS()
+		err := config.GenerateTLS() //генерируем сертификат и ключ
 		if err != nil {
 			stdLog.Fatal("Ошибка при генерации TLS конфигурации", err.Error())
 			return
 		}
-		if err := srv.ListenAndServeTLS("server.crt", "server.key"); err != nil {
+		if err := srv.ListenAndServeTLS(config.ServerCertPath, config.ServerKeyPath); err != nil {
 			stdLog.Fatal("Ошибка при запуске TLS сервера", err.Error())
 		}
 	} else {

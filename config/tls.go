@@ -13,6 +13,12 @@ import (
 	"time"
 )
 
+// пути к файлам сертификата и ключа
+var (
+	ServerCertPath string = "server.crt"
+	ServerKeyPath  string = "server.key"
+)
+
 // Генерация сертификата и ключа
 func GenerateTLS() error {
 	//Генерация информации о сертификате
@@ -22,7 +28,7 @@ func GenerateTLS() error {
 			Organization: []string{"yandexpracticum"},
 			Country:      []string{"RU"},
 		},
-		DNSNames:              []string{"localhost"}, // Добавляем DNS имя для проверки "curl -Lv --cacert server.crt https://localhost:8080
+		DNSNames:              []string{"localhost"}, // Добавляем DNS имя для проверки "curl -Lv --cacert server.crt https://localhost:8080"
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(10, 0, 0),
 		IsCA:                  true,
@@ -63,7 +69,7 @@ func GenerateTLS() error {
 	}
 
 	//Создание и запись файла сертификата
-	certOut, err := os.Create("server.crt")
+	certOut, err := os.Create(ServerCertPath)
 	if err != nil {
 		return fmt.Errorf("ошибка создания файла server.crt: %w", err)
 	}
@@ -78,7 +84,7 @@ func GenerateTLS() error {
 	}
 
 	//Создание и запись файла ключа
-	keyOut, err := os.Create("server.key")
+	keyOut, err := os.Create(ServerKeyPath)
 	if err != nil {
 		return fmt.Errorf("ошибка создания файла server.key: %w", err)
 	}
