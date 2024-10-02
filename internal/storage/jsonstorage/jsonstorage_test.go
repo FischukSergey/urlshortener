@@ -197,3 +197,25 @@ func TestWrite_DeleteFlag(t *testing.T) {
 		t.Errorf("Expected file to contain 'delete_flag: true', got %s", string(content))
 	}
 }
+
+// тест на закрытие файла
+func TestClose(t *testing.T) {
+	file, err := os.CreateTemp("", "testfile*.json")
+	if err != nil {
+		t.Fatalf("Не удалось создать временный файл: %v", err)
+	}
+	defer func() {
+		if err := os.Remove(file.Name()); err != nil {
+			t.Fatalf("ошибка удаления временного файла: %v", err)
+		}
+	}()
+
+	fw, err := NewJSONFileWriter(file.Name())
+	if err != nil {
+		t.Fatalf("ошибка инициализации JSONFileWriter: %v", err)
+	}
+	// вызываем Close
+	if err := fw.Close(); err != nil {
+		t.Fatalf("ошибка закрытия файла: %v", err)
+	}
+}

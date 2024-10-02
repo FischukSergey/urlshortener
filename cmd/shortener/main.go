@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	stdLog "log"
 	"log/slog"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -125,7 +128,34 @@ func main() {
 
 	log.Info("Initializing server", slog.String("address", srv.Addr))
 
-	if config.FlagServerTLS { //если есть флаг TLS, то генерируем сертификат и запускаем TLS сервер
+	serverCtx, serverCancel := context.WithCancel(context.Background())
+
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGQUIT, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		<-sig //ожидаем сигнал прерывания
+		log.Info("Получен сигнал прерывания")
+
+		shutdownCtx, shutdownCancel := context.WithTimeout(serverCtx, 45*time.Second) //таймаут на завершение работы сервера
+		defer shutdownCancel()
+		go func() { //принудительное завершение работы сервера по таймауту
+			<-shutdownCtx.Done()
+			if shutdownCtx.Err() == context.DeadlineExceeded {
+				stdLog.Fatal("таймаут при завершении работы сервера", shutdownCtx.Err())
+			}
+		}()
+
+		//завершаем работу сервера
+		if err := srv.Shutdown(shutdownCtx); err != nil {
+			stdLog.Fatal("Ошибка при завершении работы сервера", err.Error())
+		}
+		serverCancel() //посылаем сигнал завершения работы для других процессов
+	}()
+
+	//запускаем сервер
+	//если есть флаг TLS, то генерируем сертификат и запускаем TLS сервер
+	if config.FlagServerTLS {
 		log.Info("Starting TLS server")
 		err := config.GenerateTLS() //генерируем сертификат и ключ
 		if err != nil {
@@ -136,8 +166,12 @@ func main() {
 			stdLog.Fatal("Ошибка при запуске TLS сервера", err.Error())
 		}
 	} else {
-		if err := srv.ListenAndServe(); err != nil {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			stdLog.Fatal("Ошибка при запуске сервера", err.Error())
 		}
 	}
+
+	<-serverCtx.Done() //ожидаем завершения работы сервера
+	log.Info("Сервер завершил работу")
+	//Здесь можно добавить запись в файл или базу данных о завершении работы сервера
 }
