@@ -173,3 +173,22 @@ func (ds *DataStore) DeleteBatch(ctx context.Context, delmsges ...config.Deleted
 
 	return nil
 }
+
+// GetStats() метод получения статистики по количеству пользователей и сокращенных URL
+func (ds *DataStore) GetStats(ctx context.Context) (config.Stats, error) {
+	ds.mx.RLock()
+	defer ds.mx.RUnlock()
+
+	userIDs := make(map[int]struct{})
+	for _, urlWithUserID := range ds.URLStorage {
+		userIDs[urlWithUserID.UserID] = struct{}{}
+	}
+	stats := config.Stats{
+		URLs:   len(ds.URLStorage),
+		Users:  len(userIDs),
+	}
+	if stats.URLs == 0 && stats.Users == 0 {
+		return config.Stats{}, fmt.Errorf("no data in storage")
+	}
+	return stats, nil
+}

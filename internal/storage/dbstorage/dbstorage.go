@@ -241,3 +241,21 @@ func (s *Storage) DeleteBatch(ctx context.Context, delmsges ...config.DeletedReq
 
 	return nil
 }
+
+// GetStats метод получения статистики по количеству пользователей и сокращенных URL
+func (s *Storage) GetStats(ctx context.Context) (config.Stats, error) {
+	const op = "dbstorage.GetStats"
+	log = log.With(slog.String("method from", op))
+
+	query := `SELECT COUNT(DISTINCT userid) AS users, COUNT(*) AS urls FROM urlshort;`
+
+	var stats config.Stats
+	err := s.DB.QueryRow(ctx, query).Scan(&stats.Users, &stats.URLs)
+	if err != nil {
+		log.Error("unable to execute query")
+		return config.Stats{}, fmt.Errorf("unable to execute query: %w", err)
+	}
+
+	return stats, nil
+}
+

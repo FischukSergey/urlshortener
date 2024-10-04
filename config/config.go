@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"log"
+	"net"
 	"os"
 	"strconv"
 )
@@ -15,13 +16,15 @@ const (
 
 // переменные для парсинга флагов
 var (
-	ipAddr              string = "localhost" //адрес сервера
-	FlagServerPort      string               //адрес сервера и порта
-	FlagBaseURL         string               //базовый адрес для редиректа
-	FlagFileStoragePath string               //базовый путь хранения файла db json
-	FlagDatabaseDSN     string               //наименование базы данных
-	FlagServerTLS       bool                 //флаг для запуска сервера с TLS
-	FlagFileConfig      string               //путь к файлу конфигурации JSON
+	ipAddr              string     = "localhost" //адрес сервера
+	FlagServerPort      string                   //адрес сервера и порта
+	FlagBaseURL         string                   //базовый адрес для редиректа
+	FlagFileStoragePath string                   //базовый путь хранения файла db json
+	FlagDatabaseDSN     string                   //наименование базы данных
+	FlagServerTLS       bool                     //флаг для запуска сервера с TLS
+	FlagFileConfig      string                   //путь к файлу конфигурации JSON
+	FlagTrustedSubnets  string                   //подсети, которые могут использовать API
+	TrustedSubnet       *net.IPNet               //доверенная подсеть
 )
 
 // Config - структура для конфигурации
@@ -31,6 +34,7 @@ type Config struct {
 	FileStoragePath string `json:"file_storage_path"` //базовый путь хранения файла db json
 	DatabaseDSN     string `json:"database_dsn"`      //наименование базы данных
 	ServerTLS       bool   `json:"enable_https"`      //флаг для запуска сервера с TLS
+	TrustedSubnets  string `json:"trusted_subnets"`   //подсети, которые могут использовать API
 }
 
 // DBConfig - структура для конфигурации подключения к БД
@@ -60,6 +64,12 @@ type URLWithUserID struct {
 type DeletedRequest struct {
 	ShortURL string //сокращенный URL
 	UserID   int    //идентификатор пользователя
+}	
+
+// Stats структура для хранения статистики
+type Stats struct {
+	URLs  int `json:"urls"`
+	Users int `json:"users"`
 }
 
 // ParseFlags - функция для парсинга флагов
@@ -76,6 +86,7 @@ func ParseFlags() {
 	flag.StringVar(&FlagDatabaseDSN, "d", defaultDatabaseDSN, "name database Postgres")
 	flag.BoolVar(&FlagServerTLS, "s", false, "run server with TLS")
 	flag.StringVar(&FlagFileConfig, "c", "", "path to config file")
+	flag.StringVar(&FlagTrustedSubnets, "t", "", "trusted subnets")
 	flag.Parse()
 
 	//базовые значения конфигурации
@@ -85,6 +96,7 @@ func ParseFlags() {
 		FileStoragePath: "",
 		DatabaseDSN:     "",
 		ServerTLS:       false,
+		TrustedSubnets:  "",
 	}
 
 	//если есть переменная окружения CONFIG, то используем её
@@ -124,6 +136,21 @@ func ParseFlags() {
 		if FlagBaseURL == "" {
 			FlagBaseURL = config.BaseURL
 		}
+	}
+
+	if envTrustedSubnets := os.Getenv("TRUSTED_SUBNET"); envTrustedSubnets != "" {
+		FlagTrustedSubnets = envTrustedSubnets
+	} else {
+		if FlagTrustedSubnets == "" {
+			FlagTrustedSubnets = config.TrustedSubnets
+		}
+	}
+	if FlagTrustedSubnets != "" {
+		_, trustedSubnet, err := net.ParseCIDR(FlagTrustedSubnets)
+		if err != nil {
+			log.Fatalf("не удалось распарсить переменную окружения TRUSTED_SUBNET: %v", err)
+		}
+		TrustedSubnet = trustedSubnet
 	}
 
 	if envFlagFileStoragePath, ok := os.LookupEnv("FILE_STORAGE_PATH"); ok {
