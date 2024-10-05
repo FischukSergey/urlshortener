@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 	"strconv"
+
+	"github.com/FischukSergey/urlshortener.git/internal/models"
 )
 
 // AliasLength - длина сокращенного URL
@@ -15,13 +17,15 @@ const (
 
 // переменные для парсинга флагов
 var (
-	ipAddr              string = "localhost" //адрес сервера
-	FlagServerPort      string               //адрес сервера и порта
-	FlagBaseURL         string               //базовый адрес для редиректа
-	FlagFileStoragePath string               //базовый путь хранения файла db json
-	FlagDatabaseDSN     string               //наименование базы данных
-	FlagServerTLS       bool                 //флаг для запуска сервера с TLS
-	FlagFileConfig      string               //путь к файлу конфигурации JSON
+	ipAddr              string               = "localhost" //адрес сервера
+	FlagServerPort      string                             //адрес сервера и порта
+	FlagBaseURL         string                             //базовый адрес для редиректа
+	FlagFileStoragePath string                             //базовый путь хранения файла db json
+	FlagDatabaseDSN     string                             //наименование базы данных
+	FlagServerTLS       bool                               //флаг для запуска сервера с TLS
+	FlagFileConfig      string                             //путь к файлу конфигурации JSON
+	FlagTrustedSubnets  string                             //подсети, которые могут использовать API
+	TrustedSubnet       models.TrustedSubnet               //доверенная подсеть
 )
 
 // Config - структура для конфигурации
@@ -30,6 +34,7 @@ type Config struct {
 	BaseURL         string `json:"base_url"`          //базовый адрес для редиректа
 	FileStoragePath string `json:"file_storage_path"` //базовый путь хранения файла db json
 	DatabaseDSN     string `json:"database_dsn"`      //наименование базы данных
+	TrustedSubnets  string `json:"trusted_subnets"`   //подсети, которые могут использовать API
 	ServerTLS       bool   `json:"enable_https"`      //флаг для запуска сервера с TLS
 }
 
@@ -62,6 +67,12 @@ type DeletedRequest struct {
 	UserID   int    //идентификатор пользователя
 }
 
+// Stats структура для хранения статистики
+type Stats struct {
+	URLs  int `json:"urls"`
+	Users int `json:"users"`
+}
+
 // ParseFlags - функция для парсинга флагов
 func ParseFlags() {
 
@@ -76,6 +87,7 @@ func ParseFlags() {
 	flag.StringVar(&FlagDatabaseDSN, "d", defaultDatabaseDSN, "name database Postgres")
 	flag.BoolVar(&FlagServerTLS, "s", false, "run server with TLS")
 	flag.StringVar(&FlagFileConfig, "c", "", "path to config file")
+	flag.StringVar(&FlagTrustedSubnets, "t", "", "trusted subnets")
 	flag.Parse()
 
 	//базовые значения конфигурации
@@ -85,6 +97,7 @@ func ParseFlags() {
 		FileStoragePath: "",
 		DatabaseDSN:     "",
 		ServerTLS:       false,
+		TrustedSubnets:  "",
 	}
 
 	//если есть переменная окружения CONFIG, то используем её
@@ -123,6 +136,14 @@ func ParseFlags() {
 	} else {
 		if FlagBaseURL == "" {
 			FlagBaseURL = config.BaseURL
+		}
+	}
+
+	if envTrustedSubnets := os.Getenv("TRUSTED_SUBNET"); envTrustedSubnets != "" {
+		FlagTrustedSubnets = envTrustedSubnets
+	} else {
+		if FlagTrustedSubnets == "" {
+			FlagTrustedSubnets = config.TrustedSubnets
 		}
 	}
 

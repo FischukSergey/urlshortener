@@ -5,6 +5,7 @@ envBaseURL:=BASE_URL=http://$(ipAddr)
 envFlagFileStoragePath:=FILE_STORAGE_PATH="./tmp/short-url-db.json"
 envDatabaseDSN:=DATABASE_DSN="user=postgres password=postgres host=localhost port=5432 dbname=urlshortdb sslmode=disable"
 envEnableHTTPS:=ENABLE_HTTPS=true
+envTrustedSubnet:=TRUSTED_SUBNET="" #192.168.1.0/24
 
 server:
 				@echo "Running server"
@@ -18,7 +19,7 @@ server-https:
 
 db:
 				@echo "Running server"
-				$(envRunAddr) $(envBaseURL) $(envDatabaseDSN) go run ./cmd/shortener/main.go
+				$(envRunAddr) $(envBaseURL) $(envDatabaseDSN) $(envTrustedSubnet) go run ./cmd/shortener/main.go
 .PHONY: server
 
 map:
