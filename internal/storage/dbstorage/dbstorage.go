@@ -247,7 +247,7 @@ func (s *Storage) GetStats(ctx context.Context) (config.Stats, error) {
 	const op = "dbstorage.GetStats"
 	log = log.With(slog.String("method from", op))
 
-	query := `SELECT COUNT(DISTINCT userid) AS users, COUNT(*) AS urls FROM urlshort;`
+	query := `SELECT COUNT(DISTINCT userid) AS users, COUNT(*) AS urls FROM urlshort WHERE deletedflag=false;`
 
 	var stats config.Stats
 	err := s.DB.QueryRow(ctx, query).Scan(&stats.Users, &stats.URLs)

@@ -180,11 +180,15 @@ func (ds *DataStore) GetStats(ctx context.Context) (config.Stats, error) {
 	defer ds.mx.RUnlock()
 
 	userIDs := make(map[int]struct{})
+	k := 0
 	for _, urlWithUserID := range ds.URLStorage {
-		userIDs[urlWithUserID.UserID] = struct{}{}
+		if !urlWithUserID.DeleteFlag {
+			userIDs[urlWithUserID.UserID] = struct{}{}
+			k++
+		}
 	}
 	stats := config.Stats{
-		URLs:  len(ds.URLStorage),
+		URLs:  k,
 		Users: len(userIDs),
 	}
 	if stats.URLs == 0 && stats.Users == 0 {
