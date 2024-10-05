@@ -184,8 +184,8 @@ func (ds *DataStore) GetStats(ctx context.Context) (config.Stats, error) {
 		userIDs[urlWithUserID.UserID] = struct{}{}
 	}
 	stats := config.Stats{
-		URLs:   len(ds.URLStorage),
-		Users:  len(userIDs),
+		URLs:  len(ds.URLStorage),
+		Users: len(userIDs),
 	}
 	if stats.URLs == 0 && stats.Users == 0 {
 		return config.Stats{}, fmt.Errorf("no data in storage")

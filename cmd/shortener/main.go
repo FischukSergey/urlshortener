@@ -24,9 +24,11 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/getuserallurl"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurl"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/saveurljson"
+	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/stats"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/gzipper"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/mwlogger"
+	"github.com/FischukSergey/urlshortener.git/internal/models"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/jsonstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/mapstorage"
@@ -84,6 +86,12 @@ func main() {
 		r.Post("/api/shorten", saveurljson.PostURLjson(log, storage))
 		r.Post("/api/shorten/batch", batch.PostBatch(log, storage))
 		r.Delete("/api/user/urls", deletedflag.DeleteShortURL(log, storage.DelChan))
+		trustedSubnet, err := startTrustedSubnet(config.FlagTrustedSubnets)
+		if err == nil {
+			r.Get("/api/internal/stats", stats.GetStats(log, storage, &trustedSubnet))
+		} else {
+			log.Info("Доверенная подсеть не задана")
+		}
 
 	case config.FlagFileStoragePath != "": //работаем с json файлом если нет DB
 
@@ -107,6 +115,12 @@ func main() {
 		r.Post("/api/shorten", saveurljson.PostURLjson(log, mapURL))
 		r.Post("/api/shorten/batch", batch.PostBatch(log, mapURL))
 		r.Delete("/api/user/urls", deletedflag.DeleteShortURL(log, mapURL.DelChan))
+		trustedSubnet, err := startTrustedSubnet(config.FlagTrustedSubnets)
+		if err == nil {
+			r.Get("/api/internal/stats", stats.GetStats(log, mapURL, &trustedSubnet))
+		} else {
+			log.Info("Доверенная подсеть не задана")
+		}
 
 	default: //работаем просто с мапой
 		r.Get("/{alias}", geturl.GetURL(log, mapURL))
@@ -115,6 +129,12 @@ func main() {
 		r.Post("/api/shorten", saveurljson.PostURLjson(log, mapURL))
 		r.Post("/api/shorten/batch", batch.PostBatch(log, mapURL))
 		r.Delete("/api/user/urls", deletedflag.DeleteShortURL(log, mapURL.DelChan))
+		trustedSubnet, err := startTrustedSubnet(config.FlagTrustedSubnets)
+		if err == nil {
+			r.Get("/api/internal/stats", stats.GetStats(log, mapURL, &trustedSubnet))
+		} else {
+			log.Info("Доверенная подсеть не задана")
+		}
 	}
 
 	//запускаем сервер
@@ -174,4 +194,18 @@ func main() {
 	<-serverCtx.Done() //ожидаем завершения работы сервера
 	log.Info("Сервер завершил работу")
 	//Здесь можно добавить запись в файл или базу данных о завершении работы сервера
+}
+
+// startTrustedSubnet проверяет наличие подсети в переменной окружения TRUSTED_SUBNET
+// если подсеть задана, то возвращает структуру TrustedSubnet
+// если подсеть не задана, то возвращает ошибку
+func startTrustedSubnet(flagTrustedSubnets string) (models.TrustedSubnet, error) {
+	if flagTrustedSubnets != "" {
+		trustedSubnet, err := models.NewTrustedSubnet(flagTrustedSubnets)
+		if err != nil {
+			stdLog.Fatalf("не удалось распарсить переменную окружения TRUSTED_SUBNET: %v", err)
+		}
+		return trustedSubnet, nil
+	}
+	return models.TrustedSubnet{}, fmt.Errorf("подсеть не задана")
 }

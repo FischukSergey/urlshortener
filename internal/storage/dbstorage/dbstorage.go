@@ -258,4 +258,3 @@ func (s *Storage) GetStats(ctx context.Context) (config.Stats, error) {
 
 	return stats, nil
 }
-
