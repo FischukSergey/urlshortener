@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package urlshortener;
+
+option go_package = "github.com/FischukSergey/urlshortener.git/internal/proto";
+
+service URLShortener {
+    rpc GetURL(GetURLRequest) returns (GetURLResponse);
+}
+
+message GetURLRequest {
+    string short_url = 1;
+}
+
+message GetURLResponse {
+    string original_url = 1;
+}
