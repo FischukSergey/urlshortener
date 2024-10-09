@@ -1,0 +1,2 @@
+/Users/sergeymac/dev/urlshortener/internal/proto/contracts.pb.go:24:20: struct with 48 pointer bytes could be 32
+/Users/sergeymac/dev/urlshortener/internal/proto/contracts.pb.go:71:21: struct with 48 pointer bytes could be 32

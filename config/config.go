@@ -18,6 +18,7 @@ const (
 // переменные для парсинга флагов
 var (
 	ipAddr              string               = "localhost" //адрес сервера
+	IPPort              string               = ":8080"     //порт сервера
 	FlagServerPort      string                             //адрес сервера и порта
 	FlagBaseURL         string                             //базовый адрес для редиректа
 	FlagFileStoragePath string                             //базовый путь хранения файла db json
@@ -26,6 +27,7 @@ var (
 	FlagFileConfig      string                             //путь к файлу конфигурации JSON
 	FlagTrustedSubnets  string                             //подсети, которые могут использовать API
 	TrustedSubnet       models.TrustedSubnet               //доверенная подсеть
+	FlagGRPC            bool                               //флаг для запуска сервера с GRPC
 )
 
 // Config - структура для конфигурации
@@ -36,6 +38,7 @@ type Config struct {
 	DatabaseDSN     string `json:"database_dsn"`      //наименование базы данных
 	TrustedSubnets  string `json:"trusted_subnets"`   //подсети, которые могут использовать API
 	ServerTLS       bool   `json:"enable_https"`      //флаг для запуска сервера с TLS
+	GRPC            bool   `json:"grpc"`              //флаг для запуска сервера с GRPC
 }
 
 // DBConfig - структура для конфигурации подключения к БД
@@ -76,7 +79,7 @@ type Stats struct {
 // ParseFlags - функция для парсинга флагов
 func ParseFlags() {
 
-	defaultRunAddr := ipAddr + ":8080"                  //адрес сервера и порта
+	defaultRunAddr := ipAddr + IPPort                   //адрес сервера и порта
 	defaultBaseURL := "http://" + defaultRunAddr        //базовый адрес для редиректа
 	defaultFileStoragePath := "./tmp/short-url-db.json" //базовый путь хранения файла db json
 	defaultDatabaseDSN := ""                            //"user=postgres password=postgres host=localhost port=5432 dbname=urlshortdb sslmode=disable"
@@ -88,6 +91,7 @@ func ParseFlags() {
 	flag.BoolVar(&FlagServerTLS, "s", false, "run server with TLS")
 	flag.StringVar(&FlagFileConfig, "c", "", "path to config file")
 	flag.StringVar(&FlagTrustedSubnets, "t", "", "trusted subnets")
+	flag.BoolVar(&FlagGRPC, "g", false, "run server with GRPC")
 	flag.Parse()
 
 	//базовые значения конфигурации
@@ -98,6 +102,7 @@ func ParseFlags() {
 		DatabaseDSN:     "",
 		ServerTLS:       false,
 		TrustedSubnets:  "",
+		GRPC:            false,
 	}
 
 	//если есть переменная окружения CONFIG, то используем её
@@ -173,6 +178,18 @@ func ParseFlags() {
 	} else {
 		if !FlagServerTLS {
 			FlagServerTLS = config.ServerTLS
+		}
+	}
+
+	if envGRPC, ok := os.LookupEnv("ENABLE_GRPC"); ok && envGRPC != "" {
+		envGRPCBool, err := strconv.ParseBool(envGRPC)
+		if err != nil {
+			log.Fatalf("не удалось распарсить переменную окружения ENABLE_GRPC: %v", err)
+		}
+		FlagGRPC = envGRPCBool
+	} else {
+		if !FlagGRPC {
+			FlagGRPC = config.GRPC
 		}
 	}
 }
