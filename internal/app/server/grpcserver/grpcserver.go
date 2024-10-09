@@ -64,15 +64,15 @@ func (app *GRPCServer) MustRun() {
 		panic(err)
 	}
 }
-func (a *GRPCServer) Run() error {
-	lis, err := net.Listen("tcp", a.port)
+func (app *GRPCServer) Run() error {
+	lis, err := net.Listen("tcp", app.port)
 	if err != nil {
 		return err
 	}
-	a.log.Info("Starting gRPC server on port", slog.String("port", a.port))
+	app.log.Info("Starting gRPC server on port", slog.String("port", app.port))
 
 	//запускаем обработчик gRPC сообщений
-	if err := a.gRPCServer.Serve(lis); err != nil {
+	if err := app.gRPCServer.Serve(lis); err != nil {
 		return err
 	}
 	return nil
