@@ -79,7 +79,7 @@ func (s *serverAPI) PostURL(ctx context.Context, req *pb.PostURLRequest) (*pb.Po
 	fullURL, err := s.shortener.PostURL(ctx, req.OriginalUrl, id.(int))
 	if err != nil {
 		if errors.Is(err, dbstorage.ErrURLExists) {
-			return nil, status.Errorf(codes.AlreadyExists, err.Error())
+			return nil, status.Errorf(codes.AlreadyExists, "URL already exists")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to create short URL")
 	}
@@ -119,7 +119,7 @@ func (s *serverAPI) PostBatch(ctx context.Context, req *pb.PostBatchRequest) (*p
 	shortURLs, err := s.shortener.PostBatch(ctx, requests, id.(int))
 	if err != nil {
 		if errors.Is(err, dbstorage.ErrURLExists) {
-			return nil, status.Errorf(codes.AlreadyExists, err.Error())
+			return nil, status.Errorf(codes.AlreadyExists, "URL already exists")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to create short URL")
 	}
@@ -195,7 +195,7 @@ func (s *serverAPI) GetStats(ctx context.Context, req *pb.StatsRequest) (*pb.Sta
 	//получаем статистику
 	stats, err := s.shortener.GetStats(ctx, mask[0])
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid IP address or subnet")
 	}
 	return &pb.StatsResponse{Urls: int32(stats.URLs), Users: int32(stats.Users)}, nil
 }
