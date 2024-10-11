@@ -196,3 +196,8 @@ func (ds *DataStore) GetStats(ctx context.Context) (config.Stats, error) {
 	}
 	return stats, nil
 }
+
+// GetPingDB проверяет соединение с базой данных
+func (ds *DataStore) GetPingDB() error {
+	return nil
+}

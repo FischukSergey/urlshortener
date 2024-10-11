@@ -70,7 +70,7 @@ func StartHTTPServer(log *slog.Logger) {
 		r.Post("/api/shorten", saveurljson.PostURLjson(log, storage))
 		r.Post("/api/shorten/batch", batch.PostBatch(log, storage))
 		r.Delete("/api/user/urls", deletedflag.DeleteShortURL(log, storage.DelChan))
-		trustedSubnet, err := startTrustedSubnet(config.FlagTrustedSubnets)
+		trustedSubnet, err := StartTrustedSubnet(config.FlagTrustedSubnets)
 		if err == nil {
 			r.Get("/api/internal/stats", stats.GetStats(log, storage, &trustedSubnet))
 		} else {
@@ -98,7 +98,7 @@ func StartHTTPServer(log *slog.Logger) {
 		r.Post("/api/shorten", saveurljson.PostURLjson(log, mapURL))
 		r.Post("/api/shorten/batch", batch.PostBatch(log, mapURL))
 		r.Delete("/api/user/urls", deletedflag.DeleteShortURL(log, mapURL.DelChan))
-		trustedSubnet, err := startTrustedSubnet(config.FlagTrustedSubnets)
+		trustedSubnet, err := StartTrustedSubnet(config.FlagTrustedSubnets)
 		if err == nil {
 			r.Get("/api/internal/stats", stats.GetStats(log, mapURL, &trustedSubnet))
 		} else {
@@ -112,7 +112,7 @@ func StartHTTPServer(log *slog.Logger) {
 		r.Post("/api/shorten", saveurljson.PostURLjson(log, mapURL))
 		r.Post("/api/shorten/batch", batch.PostBatch(log, mapURL))
 		r.Delete("/api/user/urls", deletedflag.DeleteShortURL(log, mapURL.DelChan))
-		trustedSubnet, err := startTrustedSubnet(config.FlagTrustedSubnets)
+		trustedSubnet, err := StartTrustedSubnet(config.FlagTrustedSubnets)
 		if err == nil {
 			r.Get("/api/internal/stats", stats.GetStats(log, mapURL, &trustedSubnet))
 		} else {
@@ -178,10 +178,10 @@ func StartHTTPServer(log *slog.Logger) {
 	//Здесь можно добавить запись в файл или базу данных о завершении работы сервера
 }
 
-// startTrustedSubnet проверяет наличие подсети в переменной окружения TRUSTED_SUBNET
+// StartTrustedSubnet проверяет наличие подсети в переменной окружения TRUSTED_SUBNET
 // если подсеть задана, то возвращает структуру TrustedSubnet
 // если подсеть не задана, то возвращает ошибку
-func startTrustedSubnet(flagTrustedSubnets string) (models.TrustedSubnet, error) {
+func StartTrustedSubnet(flagTrustedSubnets string) (models.TrustedSubnet, error) {
 	if flagTrustedSubnets != "" {
 		trustedSubnet, err := models.NewTrustedSubnet(flagTrustedSubnets)
 		if err != nil {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -17,7 +18,7 @@ import (
 // ctxKey тип для ключей контекста
 type ctxKey int
 
-// CtxKeyUser константа для ключа контекста
+// CtxKeyUserGrpc константа для ключа контекста
 const (
 	CtxKeyUserGrpc ctxKey = iota + 1
 )
@@ -39,37 +40,35 @@ func UnaryDecryptInterceptor(ctx context.Context, req interface{}, info *grpc.Un
 		values := md.Get("session_token")
 		if len(values) > 0 {
 			token = values[0]
-			log.Info("token found", slog.String("token", token))
+			log.Debug("token found")
 			//получаем ID пользователя из токена
 			userID = auth.GetUserID(token)
 			if userID == -1 {
-				log.Info("userID not found")
+				log.Debug("userID not found")
 			} else {
-				log.Info("userID found", slog.Int("userID", userID))
+				log.Debug("userID found", slog.Int("userID", userID))
 			}
 		} else {
 			userID = -1
-			log.Info("token not found")
+			log.Debug("token not found")
 		}
 	}
 	//если токена нет и метод POST генерируем новый токен и записываем в metadata ответа
-	if userID == -1 && info.FullMethod == "POST" { //если токена нет и метод POST
+	if userID == -1 && strings.Contains(info.FullMethod, "Post") { //если токена нет и метод POST
 		newToken, id, err := auth.BuildJWTString() //вызываем функцию создания и прерываем обработку если неудача
 		if err != nil {
 			log.Error("can`t create signed token", logger.Err(err))
 			return nil, status.Error(codes.Internal, "can`t create signed token")
 		}
 
-		// записываем newToken в metadata
-		md.Set("session_token", newToken)
 		// записываем newToken в response metadata
 		err = grpc.SetHeader(ctx, metadata.Pairs("session_token", newToken))
 		if err != nil {
 			log.Error("can`t set header", logger.Err(err))
 			return nil, status.Error(codes.Internal, "can`t set token to metadata response")
 		}
-		log.Info("signed token create successfully", slog.Int("ID", id))
 		userID = id //присваиваем новый ID
+		log.Debug("signed token create successfully", slog.Int("ID", id))
 	}
 	// записываем userID в контекст
 	ctx = context.WithValue(ctx, CtxKeyUserGrpc, userID)

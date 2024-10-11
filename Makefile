@@ -5,7 +5,7 @@ envBaseURL:=BASE_URL=http://$(ipAddr)
 envFlagFileStoragePath:=FILE_STORAGE_PATH="./tmp/short-url-db.json"
 envDatabaseDSN:=DATABASE_DSN="user=postgres password=postgres host=localhost port=5432 dbname=urlshortdb sslmode=disable"
 envEnableHTTPS:=ENABLE_HTTPS=true
-envTrustedSubnet:=TRUSTED_SUBNET="" #192.168.1.0/24
+envTrustedSubnet:=TRUSTED_SUBNET="192.168.1.0/24"
 envGRPC:=ENABLE_GRPC=true
 
 server:

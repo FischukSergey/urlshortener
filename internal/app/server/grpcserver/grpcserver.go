@@ -10,6 +10,7 @@ import (
 
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/grpc/handlers"
+	"github.com/FischukSergey/urlshortener.git/internal/grpc/interceptors/mwdecrypt"
 	"github.com/FischukSergey/urlshortener.git/internal/grpc/services"
 	"github.com/FischukSergey/urlshortener.git/internal/logger"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
@@ -50,7 +51,9 @@ func New(log *slog.Logger, port string) *App {
 		port: port,
 		log:  log,
 	}
-	grpcApp.gRPCServer = grpc.NewServer()              //TODO: добавить interceptor
+	grpcApp.gRPCServer = grpc.NewServer(grpc.ChainUnaryInterceptor(
+		mwdecrypt.UnaryDecryptInterceptor, //мидлвар для расшифровки токена
+	)) //TODO: добавить interceptor
 	handlers.Register(grpcApp.gRPCServer, grpcService) //регистрируем хендлеры в grpc сервере
 
 	return &App{
