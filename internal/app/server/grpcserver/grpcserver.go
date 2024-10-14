@@ -1,6 +1,7 @@
 package grpcserver
 
 import (
+	"context"
 	stdLog "log"
 	"log/slog"
 	"net"
@@ -16,6 +17,7 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/jsonstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/mapstorage"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 )
 
 // GRPCServer структура для работы с grpc
@@ -25,7 +27,7 @@ type GRPCServer struct {
 	port       string
 }
 
-// // App структура для работы с grpc
+// App структура для работы с grpc
 type App struct {
 	GRPCServer *GRPCServer
 }
@@ -45,6 +47,12 @@ func New(log *slog.Logger, port string) *App {
 	grpcService := services.NewGRPCService(log, storage.(services.Shortener)) //создание сервиса для работы с grpc
 
 	//TODO: добавить обработку паники в grpc сервере ()
+	
+	//опции для логирования в middleware
+	loggingOpts := []logging.Option{
+		logging.WithLogOnEvents(
+			logging.PayloadReceived, logging.PayloadSent),
+	}
 
 	// инициализация grpc сервера
 	grpcApp := &GRPCServer{
@@ -53,7 +61,9 @@ func New(log *slog.Logger, port string) *App {
 	}
 	grpcApp.gRPCServer = grpc.NewServer(grpc.ChainUnaryInterceptor(
 		mwdecrypt.UnaryDecryptInterceptor, //мидлвар для расшифровки токена
+		logging.UnaryServerInterceptor(InterceptorLogger(log), loggingOpts...), //мидлвар для логирования
 	)) //TODO: добавить interceptor
+	
 	handlers.Register(grpcApp.gRPCServer, grpcService) //регистрируем хендлеры в grpc сервере
 
 	return &App{
@@ -81,7 +91,7 @@ func (app *GRPCServer) Run() error {
 	return nil
 }
 
-// инициализация хранилища
+// InitStorage инициализация хранилища
 func InitStorage(log *slog.Logger) (storage interface{}, err error) {
 	switch {
 
@@ -115,6 +125,8 @@ func InitStorage(log *slog.Logger) (storage interface{}, err error) {
 			log.Error("Не удалось прочитать файл с json сокращениями", logger.Err(err))
 		}
 		storage = mapStorage
+		log.Info("Using json file storage", slog.String("file", config.FlagFileStoragePath))
+
 	default:
 		storage = mapstorage.NewMap()
 		log.Info("Using map storage")
@@ -122,4 +134,10 @@ func InitStorage(log *slog.Logger) (storage interface{}, err error) {
 
 	log.Info("Storage initialized", slog.Any("storage", storage))
 	return storage, nil
+}
+
+func InterceptorLogger(l *slog.Logger) logging.Logger {
+	return logging.LoggerFunc(func(ctx context.Context, lvl logging.Level, msg string, fields ...any) {
+		l.Log(ctx, slog.LevelInfo, msg, fields...)
+	})
 }
