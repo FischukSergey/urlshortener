@@ -1,5 +1,5 @@
-//так не работает, сжимать только тело запроса/ответа не получается
-//сжимать можно весь пакет целиком через  установку и инициализацию grpc.gzip пакета
+// так не работает, сжимать только тело запроса/ответа не получается
+// сжимать можно весь пакет целиком через  установку и инициализацию grpc.gzip пакета
 package mwgzip
 
 import (
@@ -35,7 +35,7 @@ func UnaryGzipInterceptor(ctx context.Context, req interface{}, info *grpc.Unary
 	//обрабатываем запрос
 	resp, err := handler(ctx, req) //получаем ответ от следующего обработчика
 	if err != nil {
-		return nil, status.Errorf(status.Code(err), "failed to process request")	
+		return nil, status.Errorf(status.Code(err), "failed to process request")
 	}
 	//если заголовок запроса содержал Accept-Encoding и в нем был gzip, то сжимаем тело ответа
 	if mdContainGzip(md["accept-encoding"]) {

@@ -5,9 +5,14 @@ import (
 	stdLog "log"
 	"log/slog"
 	"net"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"google.golang.org/grpc"
+
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/grpc/handlers"
@@ -17,7 +22,6 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/jsonstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/mapstorage"
-	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 )
 
 // GRPCServer структура для работы с grpc
@@ -47,7 +51,7 @@ func New(log *slog.Logger, port string) *App {
 	grpcService := services.NewGRPCService(log, storage.(services.Shortener)) //создание сервиса для работы с grpc
 
 	//TODO: добавить обработку паники в grpc сервере ()
-	
+
 	//опции для логирования в middleware
 	loggingOpts := []logging.Option{
 		logging.WithLogOnEvents(
@@ -60,10 +64,10 @@ func New(log *slog.Logger, port string) *App {
 		log:  log,
 	}
 	grpcApp.gRPCServer = grpc.NewServer(grpc.ChainUnaryInterceptor(
-		mwdecrypt.UnaryDecryptInterceptor, //мидлвар для расшифровки токена
+		mwdecrypt.UnaryDecryptInterceptor,                                      //мидлвар для расшифровки токена
 		logging.UnaryServerInterceptor(InterceptorLogger(log), loggingOpts...), //мидлвар для логирования
 	)) //TODO: добавить interceptor
-	
+
 	handlers.Register(grpcApp.gRPCServer, grpcService) //регистрируем хендлеры в grpc сервере
 
 	return &App{
@@ -73,10 +77,22 @@ func New(log *slog.Logger, port string) *App {
 
 // Run запуск grpc сервера
 func (app *GRPCServer) MustRun() {
-	if err := app.Run(); err != nil {
-		panic(err)
-	}
+	go func() {
+		if err := app.Run(); err != nil {
+			app.log.Error("Error starting gRPC server", logger.Err(err))
+			panic(err)
+		}
+	}()
+	//graceful shutdown
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+	<-stop
+	app.log.Info("Stopping gRPC server")
+	app.gRPCServer.GracefulStop()
+	app.log.Info("gRPC server stopped")
 }
+
+// Run запуск grpc сервера
 func (app *GRPCServer) Run() error {
 	lis, err := net.Listen("tcp", app.port)
 	if err != nil {
