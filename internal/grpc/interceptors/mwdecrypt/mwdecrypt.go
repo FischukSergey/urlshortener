@@ -67,6 +67,8 @@ func UnaryDecryptInterceptor(ctx context.Context, req interface{}, info *grpc.Un
 			log.Error("can`t set header", logger.Err(err))
 			return nil, status.Error(codes.Internal, "can`t set token to metadata response")
 		}
+		//ctx = metadata.AppendToOutgoingContext(ctx, "session_token", newToken)
+
 		userID = id //присваиваем новый ID
 		log.Debug("signed token create successfully", slog.Int("ID", id))
 	}

@@ -17,7 +17,7 @@ const (
 
 // переменные для парсинга флагов
 var (
-	ipAddr              string               = "localhost" //адрес сервера
+	IPAddr              string               = "localhost" //адрес сервера
 	IPPort              string               = ":8080"     //порт сервера
 	FlagServerPort      string                             //адрес сервера и порта
 	FlagBaseURL         string                             //базовый адрес для редиректа
@@ -79,7 +79,7 @@ type Stats struct {
 // ParseFlags - функция для парсинга флагов
 func ParseFlags() {
 
-	defaultRunAddr := ipAddr + IPPort                   //адрес сервера и порта
+	defaultRunAddr := IPAddr + IPPort                   //адрес сервера и порта
 	defaultBaseURL := "http://" + defaultRunAddr        //базовый адрес для редиректа
 	defaultFileStoragePath := "./tmp/short-url-db.json" //базовый путь хранения файла db json
 	defaultDatabaseDSN := ""                            //"user=postgres password=postgres host=localhost port=5432 dbname=urlshortdb sslmode=disable"

@@ -152,6 +152,8 @@ func InitStorage(log *slog.Logger) (storage interface{}, err error) {
 	return storage, nil
 }
 
+// InterceptorLogger обертка интерсептора для логирования
+// меняем logging.LevelInfo на slog.LevelInfo
 func InterceptorLogger(l *slog.Logger) logging.Logger {
 	return logging.LoggerFunc(func(ctx context.Context, lvl logging.Level, msg string, fields ...any) {
 		l.Log(ctx, slog.LevelInfo, msg, fields...)

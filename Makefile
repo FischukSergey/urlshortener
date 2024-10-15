@@ -33,16 +33,26 @@ map:
 				$(envRunAddr) $(envBaseURL) go run ./cmd/shortener/main.go
 .PHONY: map
 
+grpc-map:
+				@echo "Running server"
+				$(envRunAddr) $(envBaseURL) $(envTrustedSubnet) $(envGRPC) FILE_STORAGE_PATH="" go run ./cmd/shortener/main.go
+.PHONY: grpc-map
+
 defaultserver:
 				@echo "Running default server "
 				go run ./cmd/shortener/main.go
 
 test:
 				@echo "Running unit tests"
-				go test -race -count=1 -cover ./...
+				go test -race -count=1 -cover ./internal/app/...
 				#go test ./internal/app/handlers/geturl/
 				#go test ./internal/app/handlers/saveurl/
 .PHONY: test
+
+test-grpc:
+				@echo "Running unit tests"
+				go test -count=1 -v ./tests
+.PHONY: test-grpc
 
 autotest:
 				@echo "Runing autotest"
