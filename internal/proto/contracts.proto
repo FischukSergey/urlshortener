@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package urlshortener;
+
+option go_package = "github.com/FischukSergey/urlshortener.git/internal/proto";
+
+service URLShortener {
+    rpc GetURL(GetURLRequest) returns (GetURLResponse);
+    rpc PostURL(PostURLRequest) returns (PostURLResponse);
+    rpc PostBatch(PostBatchRequest) returns (PostBatchResponse);
+    rpc Ping(PingRequest) returns (PingResponse);
+    rpc GetUserURLs(GetUserURLsRequest) returns (GetUserURLsResponse);
+    rpc DeleteUserURLs(DeleteUserURLsRequest) returns (DeleteUserURLsResponse);
+    rpc GetStats(StatsRequest) returns (StatsResponse);
+}
+
+// GetURL - метод для получения оригинального URL
+message GetURLRequest {
+    string short_url = 1;
+}
+message GetURLResponse {
+    string original_url = 1;
+}
+
+// PostURL - метод для создания короткой ссылки
+message PostURLRequest {
+    string original_url = 1;
+}
+message PostURLResponse {
+    string base_url = 1;
+}
+
+// PostBatchRequest - метод для создания множества коротких ссылок
+message Request {
+    string correlation_id = 1;
+    string original_url = 2;
+}
+message PostBatchRequest {
+    repeated Request requests = 1;
+}
+
+message Response {
+    string correlation_id = 1;
+    string short_url = 2;
+}
+message PostBatchResponse {
+    repeated Response responses = 1;
+}
+
+// PingRequest - метод для проверки соединения с базой данных
+message PingRequest {}
+message PingResponse {}
+
+// GetUserURLsRequest - метод для получения всех URL пользователя
+message GetUserURLsRequest {}
+message URL {
+  string short_url = 1;
+  string original_url = 2;
+}
+message GetUserURLsResponse {
+  repeated URL urls = 1;
+}
+
+// DeleteUserURLsRequest - метод для удаления URL пользователя
+message DeleteUserURLsRequest {
+  repeated string short_urls = 1;
+}
+message DeleteUserURLsResponse {}
+
+// StatsRequest - метод для получения статистики
+message StatsRequest {
+  string mask = 1;
+}
+message StatsResponse {
+  int32 urls = 1;
+  int32 users = 2;
+}
