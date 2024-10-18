@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/FischukSergey/urlshortener.git/config"
-	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/getuserallurl"
 	"github.com/FischukSergey/urlshortener.git/internal/logger"
+	"github.com/FischukSergey/urlshortener.git/internal/models"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/jsonstorage"
 )
 
@@ -118,17 +118,17 @@ func (ds *DataStore) SaveStorageURL(ctx context.Context, saveURL []config.SaveSh
 }
 
 // GetAllUserURL() получение всех записей пользователя
-func (ds *DataStore) GetAllUserURL(ctx context.Context, userID int) ([]getuserallurl.AllURLUserID, error) {
+func (ds *DataStore) GetAllUserURL(ctx context.Context, userID int) ([]models.AllURLUserID, error) {
 	const op = "mapstorage.GetAllUserURL"
 	log = log.With(slog.String("method from", op))
 	ds.mx.RLock()
 	defer ds.mx.RUnlock()
 
-	var getUserURLs []getuserallurl.AllURLUserID
+	var getUserURLs []models.AllURLUserID
 
 	for shortURL, userURL := range ds.URLStorage {
 		if userURL.UserID == userID && !userURL.DeleteFlag {
-			getUserURLs = append(getUserURLs, getuserallurl.AllURLUserID{
+			getUserURLs = append(getUserURLs, models.AllURLUserID{
 				ShortURL:    shortURL,
 				OriginalURL: userURL.OriginalURL,
 			})
@@ -171,5 +171,41 @@ func (ds *DataStore) DeleteBatch(ctx context.Context, delmsges ...config.Deleted
 		}
 	}
 
+	return nil
+}
+
+// GetStats() метод получения статистики по количеству пользователей и сокращенных URL
+func (ds *DataStore) GetStats(ctx context.Context) (config.Stats, error) {
+	ds.mx.RLock()
+	defer ds.mx.RUnlock()
+
+	userIDs := make(map[int]struct{})
+	k := 0
+	for _, urlWithUserID := range ds.URLStorage {
+		if !urlWithUserID.DeleteFlag {
+			userIDs[urlWithUserID.UserID] = struct{}{}
+			k++
+		}
+	}
+	stats := config.Stats{
+		URLs:  k,
+		Users: len(userIDs),
+	}
+	if stats.URLs == 0 && stats.Users == 0 {
+		return config.Stats{}, fmt.Errorf("no data in storage")
+	}
+	return stats, nil
+}
+
+// GetPingDB проверяет соединение с базой данных
+func (ds *DataStore) GetPingDB() error {
+	return nil
+}
+
+func (ds *DataStore) Close() {
+	close(ds.DelChan)
+}
+
+func (ds *DataStore) Ping() error {
 	return nil
 }
