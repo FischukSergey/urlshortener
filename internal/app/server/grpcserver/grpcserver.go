@@ -9,19 +9,15 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/jackc/pgx/v5/pgconn"
 	"google.golang.org/grpc"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 
-	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/grpc/handlers"
 	"github.com/FischukSergey/urlshortener.git/internal/grpc/interceptors/mwdecrypt"
 	"github.com/FischukSergey/urlshortener.git/internal/grpc/services"
 	"github.com/FischukSergey/urlshortener.git/internal/logger"
-	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
-	"github.com/FischukSergey/urlshortener.git/internal/storage/jsonstorage"
-	"github.com/FischukSergey/urlshortener.git/internal/storage/mapstorage"
+	"github.com/FischukSergey/urlshortener.git/internal/storage"
 )
 
 // GRPCServer структура для работы с grpc
@@ -39,7 +35,7 @@ type App struct {
 // New создание нового grpc сервера	с инициализацией хранилища и регистрацией хендлеров
 func New(log *slog.Logger, port string) *App {
 	// инициализация хранилища
-	storage, err := InitStorage(log)
+	storage, err := storage.InitStorage(log)
 	if err != nil {
 		stdLog.Fatal("Error initializing storage", logger.Err(err))
 	}
@@ -107,52 +103,7 @@ func (app *GRPCServer) Run() error {
 	return nil
 }
 
-// InitStorage инициализация хранилища
-func InitStorage(log *slog.Logger) (storage interface{}, err error) {
-	switch {
-
-	case config.FlagDatabaseDSN != "":
-		// работаем с базой данных если есть переменная среды или флаг ком строки
-		var DatabaseDSN *pgconn.Config
-		DatabaseDSN, err := pgconn.ParseConfig(config.FlagDatabaseDSN)
-		if err != nil {
-			log.Error("Error parsing database DSN", "error", err)
-			return nil, err
-		}
-		storage, err = dbstorage.NewDB(DatabaseDSN)
-		if err != nil {
-			log.Error("Error initializing database", "error", err)
-			return nil, err
-		}
-		log.Info("Using database storage", "database", DatabaseDSN.Database)
-
-	case config.FlagFileStoragePath != "": //работаем с json файлом если нет DB
-		mapStorage := mapstorage.NewMap()
-		//Читаем в мапу из файла с json записями url
-		readFromJSONFile, err := jsonstorage.NewJSONFileReader(config.FlagFileStoragePath)
-		if err != nil {
-			stdLog.Fatal("Не удалось открыть резервный файл с json сокращениями", config.FlagFileStoragePath)
-		}
-		log.Info("json file connection", slog.String("file", config.FlagFileStoragePath))
-
-		//mapURL.URLStorage,
-		err = readFromJSONFile.ReadToMap(mapStorage.URLStorage)
-		if err != nil {
-			log.Error("Не удалось прочитать файл с json сокращениями", logger.Err(err))
-		}
-		storage = mapStorage
-		log.Info("Using json file storage", slog.String("file", config.FlagFileStoragePath))
-
-	default:
-		storage = mapstorage.NewMap()
-		log.Info("Using map storage")
-	}
-
-	log.Info("Storage initialized", slog.Any("storage", storage))
-	return storage, nil
-}
-
-// InterceptorLogger обертка интерсептора для логирования
+// InterceptorLogger обертка интерцептора для логирования
 // меняем logging.LevelInfo на slog.LevelInfo
 func InterceptorLogger(l *slog.Logger) logging.Logger {
 	return logging.LoggerFunc(func(ctx context.Context, lvl logging.Level, msg string, fields ...any) {

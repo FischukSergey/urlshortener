@@ -27,7 +27,7 @@ func main() {
 	)
 	config.ParseFlags() //инициализируем флаги/переменные окружения конфигурации сервера
 
-	if config.FlagGRPC {
+	if config.GRPC {
 		application := grpcserver.New(log, config.IPPort)
 		application.GRPCServer.MustRun()
 	} else {

@@ -2,7 +2,6 @@ package httpserver
 
 import (
 	"context"
-	"fmt"
 	stdLog "log"
 	"log/slog"
 	"net/http"
@@ -14,7 +13,6 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"github.com/jackc/pgx/v5/pgconn"
 
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/batch"
@@ -28,14 +26,31 @@ import (
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/gzipper"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/mwlogger"
-	"github.com/FischukSergey/urlshortener.git/internal/models"
+	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/trustsubnet"
+	"github.com/FischukSergey/urlshortener.git/internal/storage"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
-	"github.com/FischukSergey/urlshortener.git/internal/storage/jsonstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/mapstorage"
 )
 
 // NewHTTPServer инициализирует сервер, маршруты и middleware
 func StartHTTPServer(log *slog.Logger) {
+	//инициализация хранилища
+	repo, err := storage.InitStorage(log)
+	if err != nil {
+		stdLog.Fatal("Ошибка инициализации хранилища", err.Error())
+	}
+	var storage config.URLStorage
+	var delChan chan config.DeletedRequest
+	switch {
+	case config.FlagDatabaseDSN != "":
+		storage = repo.(*dbstorage.Storage)
+		delChan = repo.(*dbstorage.Storage).DelChan
+	default:
+		storage = repo.(*mapstorage.DataStore)
+		delChan = repo.(*mapstorage.DataStore).DelChan
+	}
+
+	//инициализация роутера и middleware
 	r := chi.NewRouter()             //инициализируем роутер и middleware
 	r.Use(mwlogger.NewMwLogger(log)) //маршрут в middleware за логированием
 	r.Use(gzipper.NewMwGzipper(log)) //работа со сжатыми запросами/сжатие ответов
@@ -43,82 +58,27 @@ func StartHTTPServer(log *slog.Logger) {
 	r.Use(middleware.RequestID)
 	r.Mount("/debug", middleware.Profiler())
 
-	var mapURL = mapstorage.NewMap() //инициализируем мапу
-
-	switch {
-
-	case config.FlagDatabaseDSN != "": //работаем с DB если есть переменная среды или флаг ком строки
-		// Инициализируем базу данных Postgres
-		var DatabaseDSN *pgconn.Config
-		DatabaseDSN, err := pgconn.ParseConfig(config.FlagDatabaseDSN)
-		if err != nil {
-			stdLog.Fatal("Ошибка парсинга строки инициализации БД Postgres")
-		}
-
-		storage, err := dbstorage.NewDB(DatabaseDSN)
-		if err != nil {
-			stdLog.Fatal("Ошибка инициализации БД Postgres")
-		}
-		defer storage.Close()
-		log.Info("database connection", slog.String("database", DatabaseDSN.Database))
-
-		// инициализируем обработчики
-		r.Get("/{alias}", geturl.GetURL(log, storage))
-		r.Get("/ping", getpingdb.GetPingDB(log, storage))
-		r.Get("/api/user/urls", getuserallurl.GetUserAllURL(log, storage))
-		r.Post("/", saveurl.PostURL(log, storage))
-		r.Post("/api/shorten", saveurljson.PostURLjson(log, storage))
-		r.Post("/api/shorten/batch", batch.PostBatch(log, storage))
-		r.Delete("/api/user/urls", deletedflag.DeleteShortURL(log, storage.DelChan))
+	//инициализация обработчиков
+	r.Get("/{alias}", geturl.GetURL(log, storage))
+	r.Get("/ping", getpingdb.GetPingDB(log, storage))
+	r.Get("/api/user/urls", getuserallurl.GetUserAllURL(log, storage))
+	r.Post("/", saveurl.PostURL(log, storage))
+	r.Post("/api/shorten", saveurljson.PostURLjson(log, storage))
+	r.Post("/api/shorten/batch", batch.PostBatch(log, storage))
+	r.Delete("/api/user/urls", deletedflag.DeleteShortURL(log, delChan))
+	r.Group(func(r chi.Router) {
+		r.Use(trustsubnet.MwTrustSubnet(log, config.FlagTrustedSubnets))
+		r.Get("/api/internal/stats", stats.GetStats(log, storage))
+	})
+	/*
+		//проверка на доверенную подсеть
 		trustedSubnet, err := StartTrustedSubnet(config.FlagTrustedSubnets)
 		if err == nil {
 			r.Get("/api/internal/stats", stats.GetStats(log, storage, &trustedSubnet))
 		} else {
 			log.Info("Доверенная подсеть не задана")
 		}
-
-	case config.FlagFileStoragePath != "": //работаем с json файлом если нет DB
-
-		//Читаем в мапу из файла с json записями url
-		readFromJSONFile, err := jsonstorage.NewJSONFileReader(config.FlagFileStoragePath)
-		if err != nil {
-			stdLog.Fatal("Не удалось открыть резервный файл с json сокращениями", config.FlagFileStoragePath)
-		}
-		log.Info("json file connection", slog.String("file", config.FlagFileStoragePath))
-
-		//mapURL.URLStorage,
-		err = readFromJSONFile.ReadToMap(mapURL.URLStorage)
-		if err != nil {
-			fmt.Println("Не удалось прочитать файл с json сокращениями")
-		}
-		// инициализируем обработчики
-		r.Get("/{alias}", geturl.GetURL(log, mapURL))
-		r.Get("/api/user/urls", getuserallurl.GetUserAllURL(log, mapURL))
-		r.Post("/", saveurl.PostURL(log, mapURL))
-		r.Post("/api/shorten", saveurljson.PostURLjson(log, mapURL))
-		r.Post("/api/shorten/batch", batch.PostBatch(log, mapURL))
-		r.Delete("/api/user/urls", deletedflag.DeleteShortURL(log, mapURL.DelChan))
-		trustedSubnet, err := StartTrustedSubnet(config.FlagTrustedSubnets)
-		if err == nil {
-			r.Get("/api/internal/stats", stats.GetStats(log, mapURL, &trustedSubnet))
-		} else {
-			log.Info("Доверенная подсеть не задана")
-		}
-
-	default: //работаем просто с мапой
-		r.Get("/{alias}", geturl.GetURL(log, mapURL))
-		r.Get("/api/user/urls", getuserallurl.GetUserAllURL(log, mapURL))
-		r.Post("/", saveurl.PostURL(log, mapURL))
-		r.Post("/api/shorten", saveurljson.PostURLjson(log, mapURL))
-		r.Post("/api/shorten/batch", batch.PostBatch(log, mapURL))
-		r.Delete("/api/user/urls", deletedflag.DeleteShortURL(log, mapURL.DelChan))
-		trustedSubnet, err := StartTrustedSubnet(config.FlagTrustedSubnets)
-		if err == nil {
-			r.Get("/api/internal/stats", stats.GetStats(log, mapURL, &trustedSubnet))
-		} else {
-			log.Info("Доверенная подсеть не задана")
-		}
-	}
+	*/
 
 	//запускаем сервер
 	srv := &http.Server{
@@ -158,7 +118,7 @@ func StartHTTPServer(log *slog.Logger) {
 
 	//запускаем сервер
 	//если есть флаг TLS, то генерируем сертификат и запускаем TLS сервер
-	if config.FlagServerTLS {
+	if config.ServerTLS {
 		log.Info("Starting TLS server")
 		err := config.GenerateTLS() //генерируем сертификат и ключ
 		if err != nil {
@@ -175,19 +135,6 @@ func StartHTTPServer(log *slog.Logger) {
 
 	<-serverCtx.Done() //ожидаем завершения работы сервера
 	log.Info("Сервер завершил работу")
-	//Здесь можно добавить запись в файл или базу данных о завершении работы сервера
-}
-
-// StartTrustedSubnet проверяет наличие подсети в переменной окружения TRUSTED_SUBNET
-// если подсеть задана, то возвращает структуру TrustedSubnet
-// если подсеть не задана, то возвращает ошибку
-func StartTrustedSubnet(flagTrustedSubnets string) (models.TrustedSubnet, error) {
-	if flagTrustedSubnets != "" {
-		trustedSubnet, err := models.NewTrustedSubnet(flagTrustedSubnets)
-		if err != nil {
-			stdLog.Fatalf("не удалось распарсить переменную окружения TRUSTED_SUBNET: %v", err)
-		}
-		return trustedSubnet, nil
-	}
-	return models.TrustedSubnet{}, fmt.Errorf("подсеть не задана")
+	// закрываем соединение с хранилищем
+	storage.Close()
 }

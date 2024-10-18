@@ -1,10 +1,18 @@
 package models
 
-import "net"
+import (
+	"net"
+)
 
 // TrustedSubnet структура для хранения доверенной подсети
 type TrustedSubnet struct {
 	IP *net.IPNet
+}
+
+// AllURLUserID структура для хранения короткого и оригинального URL
+type AllURLUserID struct {
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
 }
 
 // NewTrustedSubnet создает структуру TrustedSubnet на основе переданной подсети

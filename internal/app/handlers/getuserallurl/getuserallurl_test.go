@@ -14,13 +14,14 @@ import (
 
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
+	"github.com/FischukSergey/urlshortener.git/internal/models"
 )
 
 type mockStorage struct{}
 
-func (m *mockStorage) GetAllUserURL(ctx context.Context, userID int) ([]AllURLUserID, error) {
+func (m *mockStorage) GetAllUserURL(ctx context.Context, userID int) ([]models.AllURLUserID, error) {
 	if userID == 1 {
-		return []AllURLUserID{
+		return []models.AllURLUserID{
 			{ShortURL: "abc123", OriginalURL: "https://example.com"},
 			{ShortURL: "def456", OriginalURL: "https://example.org"},
 		}, nil
@@ -34,7 +35,7 @@ var log = slog.New(
 
 type test struct {
 	name           string
-	expectedURLs   []AllURLUserID
+	expectedURLs   []models.AllURLUserID
 	expectedStatus int
 	userID         int
 }
@@ -45,7 +46,7 @@ func TestGetUserAllURL(t *testing.T) {
 			name:           "User with URLs",
 			userID:         1,
 			expectedStatus: http.StatusOK,
-			expectedURLs: []AllURLUserID{
+			expectedURLs: []models.AllURLUserID{
 				{ShortURL: config.FlagBaseURL + "/abc123", OriginalURL: "https://example.com"},
 				{ShortURL: config.FlagBaseURL + "/def456", OriginalURL: "https://example.org"},
 			},
@@ -80,7 +81,7 @@ func TestGetUserAllURL(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, rr.Code)
 
 			if tt.expectedStatus == http.StatusOK {
-				var result []AllURLUserID
+				var result []models.AllURLUserID
 				err = json.Unmarshal(rr.Body.Bytes(), &result)
 				require.NoError(t, err)
 				assert.Equal(t, tt.expectedURLs, result)

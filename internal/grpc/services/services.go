@@ -8,9 +8,9 @@ import (
 	"net"
 
 	"github.com/FischukSergey/urlshortener.git/config"
-	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/getuserallurl"
-	"github.com/FischukSergey/urlshortener.git/internal/app/server/httpserver"
+	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/trustsubnet"
 	"github.com/FischukSergey/urlshortener.git/internal/logger"
+	"github.com/FischukSergey/urlshortener.git/internal/models"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/mapstorage"
 	"github.com/FischukSergey/urlshortener.git/internal/utilitys"
@@ -31,7 +31,7 @@ type Shortener interface {
 	GetStorageURL(ctx context.Context, alias string) (string, bool)
 	SaveStorageURL(ctx context.Context, saveURL []config.SaveShortURL) error
 	GetPingDB() error
-	GetAllUserURL(ctx context.Context, userID int) ([]getuserallurl.AllURLUserID, error)
+	GetAllUserURL(ctx context.Context, userID int) ([]models.AllURLUserID, error)
 	GetStats(ctx context.Context) (config.Stats, error)
 }
 
@@ -174,7 +174,7 @@ func (s *ShortenerService) GetStats(ctx context.Context, mask string) (config.St
 		return config.Stats{}, errors.New("invalid IP address")
 	}
 	//проверка на доступность IP из доверенной подсети
-	trustedSubnet, err := httpserver.StartTrustedSubnet(config.FlagTrustedSubnets)
+	trustedSubnet, err := trustsubnet.StartTrustedSubnet(s.log, config.FlagTrustedSubnets)
 	if err != nil {
 		s.log.Error("GetStats", logger.Err(err))
 		return config.Stats{}, err

@@ -2,89 +2,69 @@ package stats
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/FischukSergey/urlshortener.git/config"
-	"github.com/FischukSergey/urlshortener.git/internal/models"
 )
 
-// mockStorage для тестирования
-type mockStorage struct{}
+type mockStorage struct {
+	err   error
+	stats config.Stats
+}
 
-// GetStats для тестирования mockStorage
 func (m *mockStorage) GetStats(ctx context.Context) (config.Stats, error) {
-	stats := config.Stats{
-		URLs:  10,
-		Users: 5,
-	}
-	return stats, nil
+	return m.stats, m.err
 }
 
-var log = slog.New(
-	slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
-)
-
-// test структура для тестирования
-type test struct {
-	name           string
-	userIP         string
-	expectedStats  string
-	expectedStatus int
-}
-
-// TestGetStats для тестирования GetStats
 func TestGetStats(t *testing.T) {
-	type args struct {
-		log     *slog.Logger
-		storage StatsGetter
-	}
-
-	stringSubnet := "192.168.1.0/24"
-	trustedSubnet, err := models.NewTrustedSubnet(stringSubnet)
-	if err != nil {
-		t.Fatalf("Ошибка при создании доверенной подсети: %v", err)
-	}
-
-	tests := []test{
+	tests := []struct {
+		name           string
+		expectedBody   string
+		mockStorage    mockStorage
+		expectedStatus int
+	}{
 		{
-			name:           "Valid stats",
-			userIP:         "192.168.1.1",
+			name: "Valid stats",
+			mockStorage: mockStorage{
+				stats: config.Stats{
+					URLs:  10,
+					Users: 5,
+				},
+				err: nil,
+			},
 			expectedStatus: http.StatusOK,
-			expectedStats:  "{\"urls\":10,\"users\":5}\n",
+			expectedBody:   "{\"urls\":10,\"users\":5}\n",
 		},
 		{
-			name:           "Invalid stats",
-			userIP:         "192.168.2.1",
-			expectedStatus: http.StatusForbidden,
-			expectedStats:  "{\"error\":\"Пользователь не из доверенной подсети\"}\n",
-		},
-		{
-			name:           "Invalid stats",
-			userIP:         "",
-			expectedStatus: http.StatusBadRequest,
-			expectedStats:  "{\"error\":\"Ошибка при получении IP пользователя\"}\n",
+			name: "Error stats",
+			mockStorage: mockStorage{
+				err: errors.New("error"),
+			},
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   "{\"error\":\"Ошибка при получении статистики\"}\n",
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			req, err := http.NewRequest("GET", "/api/internal/stats", nil)
-			require.NoError(t, err)
-			req.Header.Add("X-Real-IP", tt.userIP)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			requestTest := httptest.NewRequest(http.MethodGet, "/api/internal/stats", nil)
+			requestTest.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+			log := slog.New(
+				slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
+			)
+			handler := GetStats(log, &test.mockStorage)
+			handler.ServeHTTP(w, requestTest)
 
-			rr := httptest.NewRecorder()
-			handler := GetStats(log, &mockStorage{}, &trustedSubnet)
-
-			handler.ServeHTTP(rr, req)
-
-			require.Equal(t, tt.expectedStatus, rr.Code)
-			require.Equal(t, tt.expectedStats, rr.Body.String())
+			assert.Equal(t, test.expectedStatus, w.Code)
+			assert.Equal(t, test.expectedBody, w.Body.String())
 		})
 	}
 }

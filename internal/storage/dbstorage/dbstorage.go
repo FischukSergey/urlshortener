@@ -17,8 +17,8 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/FischukSergey/urlshortener.git/config"
-	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/getuserallurl"
 	"github.com/FischukSergey/urlshortener.git/internal/logger"
+	"github.com/FischukSergey/urlshortener.git/internal/models"
 )
 
 // ErrURLExists ошибка, если url уже существует
@@ -174,15 +174,17 @@ func (s *Storage) SaveStorageURL(ctx context.Context, saveURL []config.SaveShort
 // Close закрывает соединение с базой данных
 func (s *Storage) Close() {
 	s.DB.Close()
+	close(s.DelChan)
+	log.Info("соединение с базой закрыто")
 }
 
 // GetAllUserURL осуществляет выборку всех записей, сделанных пользователем ID
 // Принимает ID пользователя, возвращает слайс сокращенных и оригинальных URL
-func (s *Storage) GetAllUserURL(ctx context.Context, userID int) ([]getuserallurl.AllURLUserID, error) {
+func (s *Storage) GetAllUserURL(ctx context.Context, userID int) ([]models.AllURLUserID, error) {
 	const op = "dbstorage.GetAllUserURL"
 	log = log.With(slog.String("method from", op))
 
-	var getUserURLs []getuserallurl.AllURLUserID
+	var getUserURLs []models.AllURLUserID
 
 	query := `SELECT alias,url FROM urlshort WHERE userid=$1`
 
@@ -199,7 +201,7 @@ func (s *Storage) GetAllUserURL(ctx context.Context, userID int) ([]getuserallur
 	defer result.Close()
 
 	for result.Next() {
-		var res getuserallurl.AllURLUserID
+		var res models.AllURLUserID
 		err = result.Scan(&res.ShortURL, &res.OriginalURL)
 		if err != nil {
 			log.Error("unable to read row of query", logger.Err(err))

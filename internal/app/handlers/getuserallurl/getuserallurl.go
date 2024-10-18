@@ -11,18 +11,12 @@ import (
 
 	"github.com/FischukSergey/urlshortener.git/config"
 	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/auth"
+	"github.com/FischukSergey/urlshortener.git/internal/models"
 )
-
-// AllURLUserID структура для хранения короткого и оригинального URL
-type AllURLUserID struct {
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
-	//Error       string `json:"error,omitempty"`
-}
 
 // AllURLGetter интерфейс для поиска всех url пользователя
 type AllURLGetter interface {
-	GetAllUserURL(ctx context.Context, userID int) ([]AllURLUserID, error)
+	GetAllUserURL(ctx context.Context, userID int) ([]models.AllURLUserID, error)
 }
 
 // GetUserAllURL хендлер запроса всех записей пользователя полного и сокращенного URL
@@ -41,7 +35,7 @@ func GetUserAllURL(log *slog.Logger, storage AllURLGetter) http.HandlerFunc {
 			return
 		}
 
-		var result []AllURLUserID
+		var result []models.AllURLUserID
 		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 		defer cancel()
 		result, err := storage.GetAllUserURL(ctx, id)
@@ -57,7 +51,7 @@ func GetUserAllURL(log *slog.Logger, storage AllURLGetter) http.HandlerFunc {
 		}
 		//если все успешно
 		for i, resp := range result { //готовим нужный формат для ответа
-			result[i] = AllURLUserID{
+			result[i] = models.AllURLUserID{
 				ShortURL:    config.FlagBaseURL + "/" + resp.ShortURL,
 				OriginalURL: resp.OriginalURL,
 			}
