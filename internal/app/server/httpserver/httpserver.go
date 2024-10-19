@@ -70,15 +70,6 @@ func StartHTTPServer(log *slog.Logger) {
 		r.Use(trustsubnet.MwTrustSubnet(log, config.FlagTrustedSubnets))
 		r.Get("/api/internal/stats", stats.GetStats(log, storage))
 	})
-	/*
-		//проверка на доверенную подсеть
-		trustedSubnet, err := StartTrustedSubnet(config.FlagTrustedSubnets)
-		if err == nil {
-			r.Get("/api/internal/stats", stats.GetStats(log, storage, &trustedSubnet))
-		} else {
-			log.Info("Доверенная подсеть не задана")
-		}
-	*/
 
 	//запускаем сервер
 	srv := &http.Server{

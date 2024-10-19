@@ -7,7 +7,6 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"github.com/FischukSergey/urlshortener.git/config"
@@ -179,21 +178,7 @@ func (s *serverAPI) DeleteUserURLs(ctx context.Context, req *pb.DeleteUserURLsRe
 
 // Stats получает статистику
 func (s *serverAPI) GetStats(ctx context.Context, req *pb.StatsRequest) (*pb.StatsResponse, error) {
-	//получаем маску IP из метаданных
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument, "mask is not provided")
-	}
-	mask := md.Get("X-Real-IP")
-	if len(mask) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "mask is not provided")
-	}
-	//проверяем, что сеть задана
-	if config.FlagTrustedSubnets == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "trusted subnet is not provided")
-	}
-	//получаем статистику
-	stats, err := s.shortener.GetStats(ctx, mask[0])
+	stats, err := s.shortener.GetStats(ctx, "")
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid IP address or subnet")
 	}

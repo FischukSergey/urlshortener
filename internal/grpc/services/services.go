@@ -5,10 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net"
 
 	"github.com/FischukSergey/urlshortener.git/config"
-	"github.com/FischukSergey/urlshortener.git/internal/app/middleware/trustsubnet"
 	"github.com/FischukSergey/urlshortener.git/internal/logger"
 	"github.com/FischukSergey/urlshortener.git/internal/models"
 	"github.com/FischukSergey/urlshortener.git/internal/storage/dbstorage"
@@ -165,24 +163,8 @@ func (s *ShortenerService) DeleteBatch(ctx context.Context, shortUrls []string, 
 }
 
 // GetStats получает статистику
-func (s *ShortenerService) GetStats(ctx context.Context, mask string) (config.Stats, error) {
-	s.log.Debug("GetStats", "mask", mask)
-	//парсим маску IP
-	userIP := net.ParseIP(mask)
-	if userIP == nil {
-		s.log.Error("GetStats", logger.Err(errors.New("invalid IP address")))
-		return config.Stats{}, errors.New("invalid IP address")
-	}
-	//проверка на доступность IP из доверенной подсети
-	trustedSubnet, err := trustsubnet.StartTrustedSubnet(s.log, config.FlagTrustedSubnets)
-	if err != nil {
-		s.log.Error("GetStats", logger.Err(err))
-		return config.Stats{}, err
-	}
-	if !trustedSubnet.IsTrusted(userIP) {
-		s.log.Error("GetStats", logger.Err(errors.New("user is not in trusted subnet")))
-		return config.Stats{}, errors.New("user is not in trusted subnet")
-	}
+func (s *ShortenerService) GetStats(ctx context.Context, _ string) (config.Stats, error) {
+	s.log.Debug("service GetStats")
 	//получаем статистику если IP из доверенной подсети
 	stats, err := s.shortener.GetStats(ctx)
 	if err != nil {
