@@ -10,8 +10,11 @@ import (
 	"syscall"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 
 	"github.com/FischukSergey/urlshortener.git/internal/grpc/handlers"
 	"github.com/FischukSergey/urlshortener.git/internal/grpc/interceptors/mwdecrypt"
@@ -54,6 +57,13 @@ func New(log *slog.Logger, port string) *App {
 		logging.WithLogOnEvents(
 			logging.PayloadReceived, logging.PayloadSent),
 	}
+	//опции для обработки паники в grpc сервере
+	recoveryOpts := []recovery.Option{
+		recovery.WithRecoveryHandler(func(p any) (err error) {
+			log.Error("gRPC server panic", logger.Err(err))
+			return status.Errorf(codes.Internal, "panic: %v", p)
+		}),
+	}
 
 	// инициализация grpc сервера
 	grpcApp := &GRPCServer{
@@ -64,6 +74,7 @@ func New(log *slog.Logger, port string) *App {
 		mwdecrypt.UnaryDecryptInterceptor,                                      //мидлвар для расшифровки токена
 		logging.UnaryServerInterceptor(InterceptorLogger(log), loggingOpts...), //мидлвар для логирования
 		mwtrustsubnet.UnaryTrustSubnetInterceptor,                              //мидлвар для проверки доверенной подсети
+		recovery.UnaryServerInterceptor(recoveryOpts...),                       //мидлвар для обработки паники
 	))
 
 	handlers.Register(grpcApp.gRPCServer, grpcService) //регистрируем хендлеры в grpc сервере
