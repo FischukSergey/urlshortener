@@ -5,6 +5,8 @@ envBaseURL:=BASE_URL=http://$(ipAddr)
 envFlagFileStoragePath:=FILE_STORAGE_PATH="./tmp/short-url-db.json"
 envDatabaseDSN:=DATABASE_DSN="user=postgres password=postgres host=localhost port=5432 dbname=urlshortdb sslmode=disable"
 envEnableHTTPS:=ENABLE_HTTPS=true
+envTrustedSubnet:=TRUSTED_SUBNET="192.168.1.0/24"
+envGRPC:=ENABLE_GRPC=true
 
 server:
 				@echo "Running server"
@@ -18,13 +20,23 @@ server-https:
 
 db:
 				@echo "Running server"
-				$(envRunAddr) $(envBaseURL) $(envDatabaseDSN) go run ./cmd/shortener/main.go
-.PHONY: server
+				$(envRunAddr) $(envBaseURL) $(envDatabaseDSN) $(envTrustedSubnet) go run ./cmd/shortener/main.go
+.PHONY: db
+
+grpc:
+				@echo "Running server"
+				$(envRunAddr) $(envBaseURL) $(envDatabaseDSN) $(envTrustedSubnet) $(envGRPC) go run ./cmd/shortener/main.go
+.PHONY: grpc
 
 map:
 				@echo "Running server"
 				$(envRunAddr) $(envBaseURL) go run ./cmd/shortener/main.go
 .PHONY: map
+
+grpc-map:
+				@echo "Running server"
+				$(envRunAddr) $(envBaseURL) $(envTrustedSubnet) $(envGRPC) FILE_STORAGE_PATH="" go run ./cmd/shortener/main.go
+.PHONY: grpc-map
 
 defaultserver:
 				@echo "Running default server "
@@ -32,16 +44,21 @@ defaultserver:
 
 test:
 				@echo "Running unit tests"
-				go test -race -count=1 -cover ./...
+				go test -race -count=1 -cover ./internal/app/...
 				#go test ./internal/app/handlers/geturl/
 				#go test ./internal/app/handlers/saveurl/
 .PHONY: test
+
+test-grpc:
+				@echo "Running unit tests"
+				go test -count=1 -v ./tests
+.PHONY: test-grpc
 
 autotest:
 				@echo "Runing autotest"
 				go build -o ./cmd/shortener/shortener ./cmd/shortener/*.go
 				
-				/Users/sergeymac/dev/urlshortener/shortenertestbeta-darwin-arm64 -test.v -test.run=^TestIteration16$ \
+				/Users/sergeymac/dev/urlshortener/shortenertestbeta-darwin-arm64 -test.v -test.run=^TestIteration15$ \
 				-binary-path=cmd/shortener/shortener \
 				-file-storage-path=tmp/short-url-db.json \
 				-source-path=./ \
@@ -51,7 +68,8 @@ autotest:
 
 testcover:
 				@echo "Running unit tests into file"
-				go test -coverprofile=coverage.out ./... 
+				go test -coverpkg=./internal/app/... -coverprofile=coverage.out -covermode=count ./internal/app/...
+#				go test -coverprofile=coverage.out ./... 
 				go tool cover -func=coverage.out
 .PHONY: testcover
 
@@ -66,6 +84,13 @@ clear-my-lint:
 				rm -rf ./cmd/staticlint/result.txt
 .PHONY: clear-my-lint
 
+proto:
+				@echo "Generating proto"
+				protoc --go_out=. --go_opt=paths=source_relative \
+				--go-grpc_out=. --go-grpc_opt=paths=source_relative \
+				internal/proto/contracts.proto
+.PHONY: proto
+
 # curl -v -X GET 'http://localhost:8080/map'
 # curl -v -d "http://yandex.ru" -X POST 'http://localhost:8080/'
 # curl -v -d '{"url": "https://codewars.com"}' -H "Content-Type: application/json" POST 'http://localhost:8080/api/shorten'
@@ -78,3 +103,5 @@ clear-my-lint:
 #./cmd/staticlint/mylint ./... 2> ./cmd/staticlint/result.txt
 
 # goimports -local "github.com/FischukSergey/urlshortener.git" -w -l ./
+# curl -Lv --cacert server.crt https://localhost:8080 /проверка самоподписанного сертификата	
+# curl -Lv --key server.key --cert server.crt https://localhost:8080 /проверка подписанного сертификата

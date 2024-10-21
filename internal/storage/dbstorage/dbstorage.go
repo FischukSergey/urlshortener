@@ -17,8 +17,8 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/FischukSergey/urlshortener.git/config"
-	"github.com/FischukSergey/urlshortener.git/internal/app/handlers/getuserallurl"
 	"github.com/FischukSergey/urlshortener.git/internal/logger"
+	"github.com/FischukSergey/urlshortener.git/internal/models"
 )
 
 // ErrURLExists ошибка, если url уже существует
@@ -127,11 +127,11 @@ func (s *Storage) GetStorageURL(ctx context.Context, alias string) (string, bool
 	var resDeleted bool
 	err := s.DB.QueryRow(ctx, query, alias).Scan(&resURL, &resDeleted)
 	if errors.Is(err, pgx.ErrNoRows) {
-		log.Error("row not found")
+		log.Error("row not found", logger.Err(err))
 		return "", false
 	}
 	if err != nil {
-		log.Error("unable to execute query")
+		log.Error("unable to execute query", logger.Err(err))
 		return "", false
 	}
 	if resDeleted { //если алиас есть, но помечен на удаление
@@ -160,7 +160,7 @@ func (s *Storage) SaveStorageURL(ctx context.Context, saveURL []config.SaveShort
 				var shorturl string
 				err = s.DB.QueryRow(ctx, "SELECT alias FROM urlshort WHERE url=$1", ss.OriginalURL).Scan(&shorturl)
 				if errors.Is(err, sql.ErrNoRows) {
-					log.Error("url not found")
+					log.Error("url not found", logger.Err(err))
 					return fmt.Errorf("%s: %w", op, ErrURLExists)
 				}
 				return fmt.Errorf("%s: %w", shorturl, ErrURLExists)
@@ -174,35 +174,37 @@ func (s *Storage) SaveStorageURL(ctx context.Context, saveURL []config.SaveShort
 // Close закрывает соединение с базой данных
 func (s *Storage) Close() {
 	s.DB.Close()
+	close(s.DelChan)
+	log.Info("соединение с базой закрыто")
 }
 
 // GetAllUserURL осуществляет выборку всех записей, сделанных пользователем ID
 // Принимает ID пользователя, возвращает слайс сокращенных и оригинальных URL
-func (s *Storage) GetAllUserURL(ctx context.Context, userID int) ([]getuserallurl.AllURLUserID, error) {
+func (s *Storage) GetAllUserURL(ctx context.Context, userID int) ([]models.AllURLUserID, error) {
 	const op = "dbstorage.GetAllUserURL"
 	log = log.With(slog.String("method from", op))
 
-	var getUserURLs []getuserallurl.AllURLUserID
+	var getUserURLs []models.AllURLUserID
 
 	query := `SELECT alias,url FROM urlshort WHERE userid=$1`
 
 	result, err := s.DB.Query(ctx, query, userID)
 	if err != nil {
-		log.Error("unable to execute query")
+		log.Error("unable to execute query", logger.Err(err))
 		return getUserURLs, fmt.Errorf("unable to execute query: %w", err)
 	}
 	if result.Err() != nil {
-		log.Error("unable to execute query")
+		log.Error("unable to execute query", logger.Err(err))
 		return getUserURLs, fmt.Errorf("unable to execute query: %w", err)
 
 	}
 	defer result.Close()
 
 	for result.Next() {
-		var res getuserallurl.AllURLUserID
+		var res models.AllURLUserID
 		err = result.Scan(&res.ShortURL, &res.OriginalURL)
 		if err != nil {
-			log.Error("unable to read row of query")
+			log.Error("unable to read row of query", logger.Err(err))
 			return getUserURLs, fmt.Errorf("unable to read row of query: %w", err)
 		}
 		getUserURLs = append(getUserURLs, res)
@@ -229,15 +231,32 @@ func (s *Storage) DeleteBatch(ctx context.Context, delmsges ...config.DeletedReq
 
 	_, err := br.Exec()
 	if err != nil {
-		log.Error("unable to execute update batch of query")
+		log.Error("unable to execute update batch of query", logger.Err(err))
 		return fmt.Errorf("unable to execute update batch of query: %w", err)
 	}
 
 	err = br.Close() //в этот момент происходит обновление
 	if err != nil {
-		log.Error("unable to close  batch of query")
+		log.Error("unable to close  batch of query", logger.Err(err))
 		return fmt.Errorf("unable to close  batch of query: %w", err)
 	}
 
 	return nil
+}
+
+// GetStats метод получения статистики по количеству пользователей и сокращенных URL
+func (s *Storage) GetStats(ctx context.Context) (config.Stats, error) {
+	const op = "dbstorage.GetStats"
+	log = log.With(slog.String("method from", op))
+
+	query := `SELECT COUNT(DISTINCT userid) AS users, COUNT(*) AS urls FROM urlshort WHERE deletedflag=false;`
+
+	var stats config.Stats
+	err := s.DB.QueryRow(ctx, query).Scan(&stats.Users, &stats.URLs)
+	if err != nil {
+		log.Error("unable to execute query", logger.Err(err))
+		return config.Stats{}, fmt.Errorf("unable to execute query: %w", err)
+	}
+
+	return stats, nil
 }

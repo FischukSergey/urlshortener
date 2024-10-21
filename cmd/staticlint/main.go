@@ -7,7 +7,7 @@
 //
 // В корне проекта запустите 'make my-lint'.
 // Команда создаст файл result.txt с результатами анализа.
-// Для удаления файла result.txt запустить комманду 'make clear-my-lint'
+// Для удаления файла result.txt запустить команду 'make clear-my-lint'
 package main
 
 import (

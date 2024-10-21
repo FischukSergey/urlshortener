@@ -19,7 +19,7 @@ type ctxKey int
 
 // TokenExp константа для времени жизни токена
 const (
-	TokenExp          = time.Hour * 3
+	TokenExp          = time.Hour * 72
 	SecretKey         = "supersecretkey"
 	CtxKeyUser ctxKey = iota
 )
